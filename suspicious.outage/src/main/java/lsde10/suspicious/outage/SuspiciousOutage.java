@@ -111,11 +111,11 @@ public class SuspiciousOutage {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
+        Path file = Paths.get("output.txt");
         Set<AisTrack> tracks = tracker.getAisTracks();
         AISTrack aisIterator = tracks.iterator().next();
 		
-        Path file = Paths.get("output.txt");
         List<String> lines = Arrays.asList(aisIterator.getMmsi(), aisIterator.getShipName(),aisIterator.getLatitude(),aisIterator.getLongitude());
         Files.write(file, lines , Charset.forName("UTF-8"));
 		
