@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.io.SequenceInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -106,15 +107,17 @@ public class SuspiciousOutage {
 
             // Feed AIS Data into tracker
             tracker.update(stream);
-
-            
-            
-
         
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
+        Set<AisTrack> tracks = tracker.getAisTracks();
+        AISTrack aisIterator = tracks.iterator().next();
+		
+        Path file = Paths.get("output.txt");
+        List<String> lines = Arrays.asList(aisIterator.getMmsi(), aisIterator.getShipName(),aisIterator.getLatitude(),aisIterator.getLongitude());
+        Files.write(file, lines , Charset.forName("UTF-8"));
 		
     }
 
