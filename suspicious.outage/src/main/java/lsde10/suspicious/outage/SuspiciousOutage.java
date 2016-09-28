@@ -106,7 +106,7 @@ public class SuspiciousOutage {
 
             // Feed AIS Data into tracker
             tracker.update(stream);
-
+            tracker.getAisTracks().iterator().next().
             
             
 
