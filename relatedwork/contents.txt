@@ -1,4 +1,3 @@
-
 Detection of AIS Spoofing:  the vulnerabilities of AIS system, it's harms and possible risks to the maritime environment. And list of research on how to detect them.
 Improving maritime anomaly detection and situation awareness: technique to detect anomalies using machine learning.
 Vessel track information mining using AIS data: preprocessing ideas, more information on the structure of the data and how it can be used more efficiently.
