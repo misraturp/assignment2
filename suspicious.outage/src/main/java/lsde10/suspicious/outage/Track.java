@@ -7,6 +7,8 @@ public class Track {
 	private float longtitude;
 	private float latitude;
 	private Date timestamp;
+	boolean startOut = false;
+	boolean endOut = false;
 	
 	public Track(float latit, float longt, Date time)
 	{
@@ -23,9 +25,26 @@ public class Track {
 		this.mmsi = mmsi;
 	}*/
 	
+	public boolean isStartOut() {
+		return startOut;
+	}
+
+	public void setStartOut(boolean startOut) {
+		this.startOut = startOut;
+	}
+
+	public boolean isEndOut() {
+		return endOut;
+	}
+
+	public void setEndOut(boolean endOut) {
+		this.endOut = endOut;
+	}
+	
 	public float getLongtitude() {
 		return longtitude;
 	}
+
 	public void setLongtitude(float longtitude) {
 		this.longtitude = longtitude;
 	}

@@ -1,5 +1,6 @@
 package lsde10.suspicious.outage;
 
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -14,6 +15,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
+import eu.jacquet80.minigeo.MapWindow;
+import eu.jacquet80.minigeo.Point;
+import eu.jacquet80.minigeo.Segment;
 
 public class AisTracker {
 	
@@ -79,18 +84,21 @@ public class AisTracker {
 	}
 	
 	public static List<Long> findOutage(List<Track> tracks, int minDiff){
-		Date last = tracks.get(0).getTime();
+		Track last = tracks.get(0);
 		long diff = 0;
 		List<Long> diffs = new LinkedList<Long>();
 		for(Track track : tracks){
-			diff = track.getTime().getTime() - last.getTime();
+			diff = track.getTime().getTime() - last.getTime().getTime();
 	        diff = diff / (60 * 1000);
 	        
-			last = track.getTime();
-			
 			if(diff > minDiff){
 				diffs.add(diff);
+				track.setEndOut(true);
+				last.setStartOut(true);
 			}
+			
+			last = track;
+			
 		}
 		diffs.sort((a,b) ->  b.compareTo(a));
 		
@@ -105,6 +113,41 @@ public class AisTracker {
 				System.out.println("MMSI: " + i.toString() + " " 
 						+ l.toString() );
 		}
+	}
+	
+	public static void plotOnMap(int minDiff){
+
+		MapWindow window = new MapWindow();
+		Track last = null;
+		
+		for(Integer i : shipsSeen){
+			
+			List<Long> l = findOutage(getTrack(i), minDiff);
+			if(!l.isEmpty()){
+				List<Track> temp_tracks = getTrack(i);
+				for (Track t: temp_tracks)
+				{
+					if(!t.isStartOut() && !t.isEndOut())
+					{
+						window.addSegment(new Segment (new Point(t.getLatitude(),
+									t.getLongtitude()),
+									new Point(t.getLatitude(),
+									t.getLongtitude()), Color.BLACK));						
+					}
+					else if(t.startOut){
+						last = t;
+					}
+					else if(t.endOut){
+						window.addSegment(new Segment (new Point(last.getLatitude(),
+																last.getLongtitude()),
+														new Point(t.getLatitude(),
+																	t.getLongtitude()), Color.RED));
+					}
+				}
+			}
+		}
+		window.setVisible(true);
+		
 	}
 	
 }
