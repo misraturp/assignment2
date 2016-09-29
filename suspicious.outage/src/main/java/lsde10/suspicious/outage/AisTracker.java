@@ -8,14 +8,11 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
-
 import eu.jacquet80.minigeo.MapWindow;
 import eu.jacquet80.minigeo.Point;
 import eu.jacquet80.minigeo.Segment;
@@ -106,20 +103,25 @@ public class AisTracker {
 	}
 	
 	public static void printOutages(int minDiff){
+		int count = 0;
 		for(Integer i : shipsSeen){
 			
 			List<Long> l = findOutage(getTrack(i), minDiff);
-			if(!l.isEmpty())
+			if(!l.isEmpty()){
 				System.out.println("MMSI: " + i.toString() + " " 
 						+ l.toString() );
+				count++;
+			}
 		}
+		double ratio = count/((double)shipsSeen.size());
+		System.out.println("ratio: " + String.valueOf(ratio));
 	}
 	
 	public static void plotOnMap(int minDiff){
 
 		MapWindow window = new MapWindow();
 		Track last = null;
-		
+		int c = 0;
 		for(Integer i : shipsSeen){
 			
 			List<Long> l = findOutage(getTrack(i), minDiff);
@@ -145,6 +147,8 @@ public class AisTracker {
 					}
 				}
 			}
+			c++;
+			System.out.println("Progress: " + String.valueOf((double)(c/shipsSeen.size()) * 100) + "%" );
 		}
 		window.setVisible(true);
 		

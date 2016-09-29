@@ -16,13 +16,10 @@ public class SuspiciousOutage {
 	public static void main( String[] args )
     {
 		String path = System.getProperty("user.dir");
-		//File data = new File(path + "//data//03//06-00.txt");
-		//InputStream inputStream = null;
-		
 		
 		List<InputStream> iss = null;
 		try {
-			iss = Files.list(Paths.get(path + "//data//03//"))
+			iss = Files.list(Paths.get(path + "//data//06//"))
 			        .filter(Files::isRegularFile)
 			        .map(f -> {
 			            try {
@@ -39,17 +36,20 @@ public class SuspiciousOutage {
 		SequenceInputStream stream = new SequenceInputStream(Collections.enumeration(iss));
 
 		
-		File dir = new File(path + "//data//03//");
+		File dir = new File(path + "//data//06//");
+		int c = 0;
 		File[] directoryListing = dir.listFiles();
 		if (directoryListing != null) {
 			for (File child : directoryListing) {
-		    	if(child.getName().startsWith("!")){
+		    	if(child.getName().startsWith("!") && (c < 240)){
 		    		AisTracker.readCsv(child.getAbsolutePath());
+		    		c++;
 		    	}
 			}
 		}
-		System.out.println(AisTracker.getTrack(244250734));
-		AisTracker.printOutages(90);		
+
+		AisTracker.printOutages(30);
+		//AisTracker.plotOnMap(180);
     }
 
 }

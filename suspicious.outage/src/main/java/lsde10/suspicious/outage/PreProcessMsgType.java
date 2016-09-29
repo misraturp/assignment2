@@ -60,14 +60,14 @@ public class PreProcessMsgType {
 		
 		String path = System.getProperty("user.dir");
 		
-		File dir = new File(path + "//data//03//");
+		File dir = new File(path + "//data//06//");
 		File[] directoryListing = dir.listFiles();
 		if (directoryListing != null) {
 		    for (File child : directoryListing) {
 		    	if(child.getName().startsWith("_")){
 		    		try {
 						FileInputStream is = new FileInputStream(child);
-						String fileP = path + "//data//03//" + "!" + child.getName().substring(1);
+						String fileP = path + "//data//06//" + "!" + child.getName().substring(1);
 				    	currentSecond = child.getName().substring(1,3) + child.getName().substring(4,6);
 						System.out.println(currentSecond);
 						writer = new BufferedWriter(new FileWriter(fileP));

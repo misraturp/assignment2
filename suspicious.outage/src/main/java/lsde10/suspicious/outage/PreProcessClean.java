@@ -12,7 +12,7 @@ public class PreProcessClean {
 	public static void main(String[] args) {
 		String path = System.getProperty("user.dir");
 
-		File dir = new File(path + "//data//03//");
+		File dir = new File(path + "//data//06//");
 		File[] directoryListing = dir.listFiles();
 		if (directoryListing != null) {
 		    for (File child : directoryListing) {
@@ -20,7 +20,7 @@ public class PreProcessClean {
 		    	if(Character.isDigit(child.getName().charAt(0))){
 					try {
 						BufferedReader reader = new BufferedReader(new FileReader(child));
-						String fileP = path + "//data//03//" + "_" + child.getName();
+						String fileP = path + "//data//06//" + "_" + child.getName();
 				    	BufferedWriter writer = new BufferedWriter(new FileWriter(fileP));
 				    	
 				    	String line = reader.readLine();
