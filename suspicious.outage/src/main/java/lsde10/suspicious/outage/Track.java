@@ -1,12 +1,14 @@
 package lsde10.suspicious.outage;
 
+import java.util.Date;
+
 public class Track {
 	//public int mmsi;
-	public float longtitude;
-	public float latitude;
-	public int timestamp;
+	private float longtitude;
+	private float latitude;
+	private Date timestamp;
 	
-	public Track(float latit, float longt, int time)
+	public Track(float latit, float longt, Date time)
 	{
 		//mmsi = ship_mmsi;
 		longtitude = longt;
@@ -33,10 +35,10 @@ public class Track {
 	public void setLatitude(float latitude) {
 		this.latitude = latitude;
 	}
-	public int getTime() {
+	public Date getTime() {
 		return timestamp;
 	}
-	public void setTime(int time) {
+	public void setTime(Date time) {
 		this.timestamp = time;
 	}	
 }

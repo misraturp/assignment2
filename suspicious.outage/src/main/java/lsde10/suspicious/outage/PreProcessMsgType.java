@@ -24,7 +24,6 @@ public class PreProcessMsgType {
 			switch(msg.getMessageType()){
 				case PositionReportClassAScheduled : 
 					PositionReportClassAScheduled r1 = (PositionReportClassAScheduled) msg;
-				
 					writer.write(r1.getSourceMmsi().getMMSI().toString() + ','
 							+ r1.getLatitude().toString() + ','
 							+ r1.getLongitude().toString() + ','

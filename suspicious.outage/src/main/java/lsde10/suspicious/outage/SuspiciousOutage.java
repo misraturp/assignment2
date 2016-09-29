@@ -4,24 +4,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.io.SequenceInputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import com.google.common.eventbus.Subscribe;
-
-import dk.tbsalling.ais.tracker.AISTrack;
-import dk.tbsalling.ais.tracker.AISTracker;
-import dk.tbsalling.ais.tracker.events.AisTrackCreatedEvent;
-import dk.tbsalling.ais.tracker.events.AisTrackDeletedEvent;
-import dk.tbsalling.ais.tracker.events.AisTrackDynamicsUpdatedEvent;
-import dk.tbsalling.ais.tracker.events.AisTrackUpdatedEvent;
-import dk.tbsalling.aismessages.AISInputStreamReader;
 
 public class SuspiciousOutage {
 
@@ -61,7 +49,7 @@ public class SuspiciousOutage {
 			}
 		}
 		System.out.println(AisTracker.getTrack(244250734));
-		
+		AisTracker.printOutages(90);		
     }
 
 }
