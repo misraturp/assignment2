@@ -10,7 +10,7 @@ import dk.tbsalling.aismessages.nmea.exceptions.NMEAParseException;
 import dk.tbsalling.aismessages.nmea.exceptions.UnsupportedMessageType;
 import dk.tbsalling.aismessages.nmea.messages.NMEAMessage;
 
-public class PreProcessor {
+public class Processor {
 	
 	private static final Logger log = Logger.getLogger(NMEAMessageInputStreamReader.class.getName());
 
@@ -21,9 +21,17 @@ public class PreProcessor {
 
 
 
-	public PreProcessor(){
-		
-	}
+	   private static Processor instance = null;
+	   
+	   private Processor() {}
+	   
+	   
+	   public static Processor getInstance() {
+	      if(instance == null) {
+	         instance = new Processor();
+	      }
+	      return instance;
+	   }
 	
 	
 	

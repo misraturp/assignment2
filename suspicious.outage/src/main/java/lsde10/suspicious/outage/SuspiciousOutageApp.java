@@ -54,6 +54,9 @@ public class SuspiciousOutageApp {
 		
 		SuspiciousOutageApp app = new SuspiciousOutageApp();
 		JavaSparkContext sc = app.getJavaSparkContext();
+		Processor processor = Processor.getInstance();
+		
+		
 		JavaRDD<String> distFile = sc.textFile("\\user\\hannesm\\lsde\\ais\\10\\01\\00-00.txt");
 		distFile.map(s -> s.length()).reduce((a, b) -> a + b);
 		

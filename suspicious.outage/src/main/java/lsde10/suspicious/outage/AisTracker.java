@@ -13,9 +13,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import eu.jacquet80.minigeo.MapWindow;
-import eu.jacquet80.minigeo.Point;
-import eu.jacquet80.minigeo.Segment;
 
 public class AisTracker {
 	
@@ -117,7 +114,7 @@ public class AisTracker {
 		System.out.println("ratio: " + String.valueOf(ratio));
 	}
 	
-	public static void plotOnMap(int minDiff){
+	/*public static void plotOnMap(int minDiff){
 
 		MapWindow window = new MapWindow();
 		Track last = null;
@@ -152,6 +149,6 @@ public class AisTracker {
 		}
 		window.setVisible(true);
 		
-	}
+	}*/
 	
 }
