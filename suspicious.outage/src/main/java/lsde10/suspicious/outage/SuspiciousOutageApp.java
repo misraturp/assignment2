@@ -11,11 +11,55 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SuspiciousOutage {
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.SparkConf;
+
+
+public class SuspiciousOutageApp {
+	
+	private SparkConf sparkConf;
+	private JavaSparkContext javaSparkContext;
+	
+	private void init(){
+		sparkConf = new SparkConf().setAppName("SuspiciousOutageApp").setMaster("yarn-cluster");
+		javaSparkContext = new JavaSparkContext(sparkConf);
+		
+	}
+	
+	public SuspiciousOutageApp(){
+		this.init();
+	}
+	
+	
+	public SparkConf getSparkConf() {
+		return sparkConf;
+	}
+	public void setSparkConf(SparkConf sparkConf) {
+		this.sparkConf = sparkConf;
+	}
+	public JavaSparkContext getJavaSparkContext() {
+		return javaSparkContext;
+	}
+	public void setJavaSparkContext(JavaSparkContext javaSparkContext) {
+		this.javaSparkContext = javaSparkContext;
+	}
+
+
+	
+	
 
 	public static void main( String[] args )
     {
-		String path = System.getProperty("user.dir");
+		
+		SuspiciousOutageApp app = new SuspiciousOutageApp();
+		JavaSparkContext sc = app.getJavaSparkContext();
+		JavaRDD<String> distFile = sc.textFile("\\user\\hannesm\\lsde\\ais\\10\\01\\00-00.txt");
+		distFile.map(s -> s.length()).reduce((a, b) -> a + b);
+		
+		/*
+		 * Code from the local version 
+		 * String path = System.getProperty("user.dir");
 		
 		List<InputStream> iss = null;
 		try {
@@ -31,7 +75,7 @@ public class SuspiciousOutage {
 		} catch (IOException e1) {
 			
 			e1.printStackTrace();
-		}
+		} 
 
 		SequenceInputStream stream = new SequenceInputStream(Collections.enumeration(iss));
 
@@ -46,7 +90,7 @@ public class SuspiciousOutage {
 		    		c++;
 		    	}
 			}
-		}
+		}*/
 
 		AisTracker.printOutages(30);
 		//AisTracker.plotOnMap(180);

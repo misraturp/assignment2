@@ -22,5 +22,8 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/alexs/Documents/Studium/LSDE/Project2/assignment2/minigeo-r6.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/unfolding_app_template_with_examples_0.9.6"/>
+	<classpathentry kind="lib" path="/unfolding_app_template_with_examples_0.9.6/lib/unfolding.0.9.6.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
