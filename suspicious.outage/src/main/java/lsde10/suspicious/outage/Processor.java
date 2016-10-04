@@ -11,45 +11,42 @@ import dk.tbsalling.aismessages.nmea.exceptions.UnsupportedMessageType;
 import dk.tbsalling.aismessages.nmea.messages.NMEAMessage;
 
 public class Processor {
-	
+
 	private static final Logger log = Logger.getLogger(NMEAMessageInputStreamReader.class.getName());
-
 	private NMEAMessageHandler nmeaMessageHandler;
-	
 
+	private static Processor instance = null;
 
+	private Processor() {
+	}
 
-
-
-	   private static Processor instance = null;
-	   
-	   private Processor() {}
-	   
-	   
-	   public static Processor getInstance() {
-	      if(instance == null) {
-	         instance = new Processor();
-	      }
-	      return instance;
-	   }
+	public static Processor getInstance() {
+		if (instance == null) {
+			instance = new Processor();
+		}
+		return instance;
+	}
 	
-	
-	
-	
-	
-	
-	public AISMessage decodeAISMessage(String msg){
+	public String cleanAISMsg(String msg){
+		//TODO
 		
-		//this.nmeaMessageHandler = new NMEAMessageHandler("SRC", aisMessageConsumer);
-		
-		String string =" ";
+		return " ";
+	}
+	
+	
+	public AISMessage decodeAISMessage(String msg) {
+
+		// this.nmeaMessageHandler = new NMEAMessageHandler("SRC",
+		// aisMessageConsumer);
+
+		String string = " ";
 		try {
 			NMEAMessage nmea = NMEAMessage.fromString(msg);
 			NMEAMessageHandler nmeaMessageHandler;
-			//nmeaMessageHandler.accept(nmea);
+			// nmeaMessageHandler.accept(nmea);
 			log.fine("Received: " + nmea.toString());
 		} catch (InvalidMessage invalidMessageException) {
-			log.warning("Received invalid AIS message: \"" + string  + "\"");
+			log.warning("Received invalid AIS message: \"" + string + "\"");
 		} catch (UnsupportedMessageType unsupportedMessageTypeException) {
 			log.warning("Received unsupported NMEA message: \"" + string + "\"");
 		} catch (NMEAParseException parseException) {
@@ -58,6 +55,8 @@ public class Processor {
 		return null;
 	}
 	
-	
+	public void trainGridMap(AISMessage msg){
+		
+	}
 
 }
