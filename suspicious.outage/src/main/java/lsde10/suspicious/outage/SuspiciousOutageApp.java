@@ -4,6 +4,9 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.storage.StorageLevel;
 
 import dk.tbsalling.aismessages.ais.messages.AISMessage;
+import dk.tbsalling.aismessages.ais.messages.PositionReportClassAAssignedSchedule;
+import dk.tbsalling.aismessages.ais.messages.PositionReportClassAResponseToInterrogation;
+import dk.tbsalling.aismessages.ais.messages.PositionReportClassAScheduled;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -72,6 +75,25 @@ public class SuspiciousOutageApp {
 		
 		long count = decoded.count();
 		System.out.println(count);
+
+		//can reduce handle when the message is returned as null?
+		AISMessage maxLatMsg = decoded.reduce((a,b) -> processor.compareLatitude(a, b, true));
+		AISMessage minLatMsg = decoded.reduce((a,b) -> processor.compareLatitude(a, b, false));
+		
+		AISMessage maxLonMsg = decoded.reduce((a,b) -> processor.compareLongitude(a, b, true));
+		AISMessage minLonMsg = decoded.reduce((a,b) -> processor.compareLongitude(a, b, false));
+		
+		float maxLat = processor.getValue(maxLatMsg, true);
+		float minLat = processor.getValue(minLatMsg, true);
+		
+		float maxLon = processor.getValue(maxLonMsg, false);
+		float minLon = processor.getValue(minLonMsg, false);
+		
+		System.out.printf("maximum latitude: %.5f", maxLat);
+		System.out.printf("minimum latitude: %.5f", minLat);
+		System.out.printf("maximum longtitude: %.5f", maxLon);
+		System.out.printf("maximum longtitude: %.5f", minLon);
+		
 		
 		//TODO read the Messages and train a grid-like World-map
 		//decoded.foreach(m -> processor.trainGridMap(m)); //  NOT SURE ABOUT THIS
