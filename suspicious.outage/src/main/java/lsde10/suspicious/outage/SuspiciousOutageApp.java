@@ -73,21 +73,23 @@ public class SuspiciousOutageApp {
 		JavaRDD<String> distFile = sc.textFile("\\user\\hannesm\\lsde\\ais\\10\\01\\00-00.txt");
 		distFile.map(s -> s.length()).reduce((a, b) -> a + b);
 		
-		//TODO get rid of the time information inside the files, but keep all lines
-		JavaRDD<String> cleanAIS = distFile.map(s -> processor.cleanAISMsg(s));
+		//get rid of the time information inside the files, but keep all lines
+		JavaRDD<String> cleanAIS = distFile.filter(s -> s.indexOf("!", 0) != -1 )
+										   .map( s ->  processor.cleanAISMsg(s));
 		
-		//TODO decode the lines to AISMessages
+		//decode the lines to AISMessages
 		JavaRDD<AISMessage> decoded = cleanAIS.map(s -> processor.decodeAISMessage(s));
 		decoded.persist(StorageLevel.MEMORY_ONLY());
 		
 		//TODO read the Messages and train a grid-like World-map
 		decoded.foreach(m -> processor.trainGridMap(m)); //  NOT SURE ABOUT THIS
 		
-		
 		//TODO find ships that have suspicious outage time
+		
 		
 		//TODO check if the found ships are in a area where other ships are able to send
 		//signals
+		
 		
 		//TODO make a final ranking by taking the type of the ship into account
 		
