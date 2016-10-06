@@ -1,10 +1,10 @@
 package lsde10.suspicious.outage;
 
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.storage.StorageLevel;
 
-import dk.tbsalling.aismessages.ais.messages.AISMessage;
-import org.apache.spark.api.java.JavaPairRDD;
+import dk.dma.ais.message.AisMessage;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.SparkConf;
 
@@ -15,7 +15,7 @@ public class SuspiciousOutageApp {
 	private JavaSparkContext javaSparkContext;
 	
 	private void init(){
-		sparkConf = new SparkConf().setAppName("SuspiciousOutageApp").setMaster("yarn-client");
+		sparkConf = new SparkConf().setAppName("SuspiciousOutageApp");
 		javaSparkContext = new JavaSparkContext(sparkConf);
 		
 	}
@@ -51,26 +51,109 @@ public class SuspiciousOutageApp {
 	
 	
 
+
 	public static void main( String[] args )
     {
 		
 		SuspiciousOutageApp app = SuspiciousOutageApp.getInstance();
 		JavaSparkContext sc = app.getJavaSparkContext();
-		Processor processor = Processor.getInstance();
+		final Processor processor = Processor.getInstance();
 		
 		
-		JavaPairRDD<String, String> files = sc.wholeTextFiles("\\user\\hannesm\\lsde\\ais\\10\\01");
+		JavaRDD<String> files = sc.textFile("\\user\\hannesm\\lsde\\ais\\10\\01\\00-00.txt.gz");
 		
 		//get rid of the time information inside the files, but keep all lines
-		JavaPairRDD<String,String> cleanAIS = files.mapToPair(s ->  processor.cleanAISMsg(s));
+		//JavaPairRDD<String,String> cleanAIS = files.mapToPair(s ->  processor.cleanAISMsg(s));
+		JavaRDD<String> filteredAIS = files.filter(new Function<String, Boolean>() {
+			
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Boolean call(String line) throws Exception {
+				if(!line.startsWith("!")){
+					int index = line.indexOf("!", 0);
+					if(index == -1){
+						return false;
+					}
+					return true;
+				}
+				return true;
+			}
+		});
+		
+		JavaRDD<String> cleanedAIS = filteredAIS.map(new Function<String, String>() {
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String call(String line) throws Exception {
+				return processor.cleanAISMsg(line);
+			}
+		});
+		
+		JavaRDD<AisMessage> rawAIS = cleanedAIS.map(new Function<String, AisMessage>() {
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public AisMessage call(String msg) throws Exception {
+				return processor.decodeAisMessage(msg);
+			}
+		});
+		
+		JavaRDD<AisMessage> decodedAIS = rawAIS.filter(new Function<AisMessage, Boolean>() {
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Boolean call(AisMessage v1) throws Exception {
+				if(v1 == null)
+					return false;
+				return true;
+			}
+		});
+		
+		decodedAIS.persist(StorageLevel.MEMORY_ONLY());
+		
+		
+		/*JavaPairRDD<String,String> cleanAIS = files.mapToPair(new PairFunction<Tuple2<String,String>, String, String>(){
+
+			@Override
+			public Tuple2<String, String> call(Tuple2<String, String> file) throws Exception {
+				return processor.cleanAISMsg(file);
+			}
+			
+		});*/
 		
 		
 		//decode the lines to AISMessages
-		JavaRDD<AISMessage> decoded = cleanAIS.flatMap(s -> processor.decodeAISMessage(s));
-		decoded.persist(StorageLevel.MEMORY_ONLY());
+		//JavaRDD<AISMessage> decoded = cleanAIS.flatMap(s -> processor.decodeAISMessage(s));
+		/* JavaRDD<AisMessage> decoded = cleanAIS.flatMap(new FlatMapFunction<Tuple2<String,String>, AisMessage>() {
+
+			@Override
+			public Iterable<AisMessage> call(Tuple2<String, String> file) throws Exception {
+				return processor.decodeAISMessage(file);
+			}
+		}); */
 		
 		
-		long count = decoded.count();
+		
+		//decoded.persist(StorageLevel.MEMORY_ONLY());
+		
+		
+		/*long count = decoded.count();
 		System.out.println(count);
 
 		//can reduce handle when the message is returned as null?
@@ -89,7 +172,7 @@ public class SuspiciousOutageApp {
 		System.out.printf("maximum latitude: %.5f", maxLat);
 		System.out.printf("minimum latitude: %.5f", minLat);
 		System.out.printf("maximum longtitude: %.5f", maxLon);
-		System.out.printf("maximum longtitude: %.5f", minLon);
+		System.out.printf("maximum longtitude: %.5f", minLon);*/
 		
 		
 		//TODO read the Messages and train a grid-like World-map
