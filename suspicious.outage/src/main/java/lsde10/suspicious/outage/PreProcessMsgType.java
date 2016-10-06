@@ -54,7 +54,7 @@ public class PreProcessMsgType {
 		}
 	}
 
-	public static void main(String[] args) {
+	/*public static void main(String[] args) {
 		nonPos = 0;
 		Pos = 0;
 		
@@ -88,6 +88,6 @@ public class PreProcessMsgType {
 		    }
 		}
 
-	}
+	}*/
 	
 }

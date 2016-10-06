@@ -4,10 +4,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.storage.StorageLevel;
 
 import dk.tbsalling.aismessages.ais.messages.AISMessage;
-import dk.tbsalling.aismessages.ais.messages.PositionReportClassAAssignedSchedule;
-import dk.tbsalling.aismessages.ais.messages.PositionReportClassAResponseToInterrogation;
-import dk.tbsalling.aismessages.ais.messages.PositionReportClassAScheduled;
-
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.SparkConf;
@@ -19,7 +15,7 @@ public class SuspiciousOutageApp {
 	private JavaSparkContext javaSparkContext;
 	
 	private void init(){
-		sparkConf = new SparkConf().setAppName("SuspiciousOutageApp").setMaster("yarn-cluster");
+		sparkConf = new SparkConf().setAppName("SuspiciousOutageApp").setMaster("yarn-client");
 		javaSparkContext = new JavaSparkContext(sparkConf);
 		
 	}

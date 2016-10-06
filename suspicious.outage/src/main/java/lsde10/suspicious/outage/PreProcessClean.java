@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class PreProcessClean {
 
-	public static void main(String[] args) {
+	/*public static void main(String[] args) {
 		String path = System.getProperty("user.dir");
 
 		File dir = new File(path + "//data//06//");
@@ -51,5 +51,5 @@ public class PreProcessClean {
 			    	
 		    }
 		}	
-	}
+	}*/
 }
