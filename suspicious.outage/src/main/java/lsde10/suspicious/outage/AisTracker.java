@@ -77,7 +77,7 @@ public class AisTracker {
 		return trackMap.get(req_mmsi);		
 	}
 	
-	public static List<Long> findOutage(List<Track> tracks, int minDiff){
+	/*public static List<Long> findOutage(List<Track> tracks, int minDiff){
 		Track last = tracks.get(0);
 		long diff = 0;
 		List<Long> diffs = new LinkedList<Long>();
@@ -97,9 +97,9 @@ public class AisTracker {
 		diffs.sort((a,b) ->  b.compareTo(a));
 		
 		return diffs;
-	}
+	}*/
 	
-	public static void printOutages(int minDiff){
+	/*public static void printOutages(int minDiff){
 		int count = 0;
 		for(Integer i : shipsSeen){
 			
@@ -112,7 +112,7 @@ public class AisTracker {
 		}
 		double ratio = count/((double)shipsSeen.size());
 		System.out.println("ratio: " + String.valueOf(ratio));
-	}
+	}*/
 	
 	/*public static void plotOnMap(int minDiff){
 

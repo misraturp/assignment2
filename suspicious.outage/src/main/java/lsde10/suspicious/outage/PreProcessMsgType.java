@@ -5,11 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import dk.tbsalling.aismessages.AISInputStreamReader;
-import dk.tbsalling.aismessages.ais.messages.AISMessage;
-import dk.tbsalling.aismessages.ais.messages.PositionReportClassAAssignedSchedule;
-import dk.tbsalling.aismessages.ais.messages.PositionReportClassAResponseToInterrogation;
-import dk.tbsalling.aismessages.ais.messages.PositionReportClassAScheduled;
 
 public class PreProcessMsgType {
 	static long nonPos = 0;
@@ -18,7 +13,7 @@ public class PreProcessMsgType {
 	static String currentSecond = null;
 	//boolean init = false;
 	
-	private static void processMessage(AISMessage msg){
+	/*private static void processMessage(AISMessage msg){
 		if(msg.getSourceMmsi().getMMSI() > 0){
 			try {
 			switch(msg.getMessageType()){

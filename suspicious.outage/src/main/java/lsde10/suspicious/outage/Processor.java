@@ -1,21 +1,25 @@
 package lsde10.suspicious.outage;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import dk.tbsalling.aismessages.AISInputStreamReader;
-import dk.tbsalling.aismessages.ais.messages.AISMessage;
+
+import dk.dma.ais.binary.SixbitException;
+import dk.dma.ais.message.AisMessage;
+import dk.dma.ais.message.AisMessageException;
+import dk.dma.ais.sentence.SentenceException;
+import dk.dma.ais.sentence.Vdm;
 import scala.Tuple2;
-import dk.tbsalling.aismessages.ais.messages.PositionReportClassAAssignedSchedule;
-import dk.tbsalling.aismessages.ais.messages.PositionReportClassAResponseToInterrogation;
-import dk.tbsalling.aismessages.ais.messages.PositionReportClassAScheduled;
 
 
-public class Processor {
+public class Processor implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	
 	private static Processor instance = null;
 
 	private Processor() {
@@ -27,6 +31,15 @@ public class Processor {
 		}
 		return instance;
 	}
+	
+	public String cleanAISMsg(String line){
+		if(!line.startsWith("!")){
+			int index = line.indexOf("!", 0);
+			return line.substring(index);
+		}
+		return line;
+	}
+	
 	
 	public Tuple2<String, String> cleanAISMsg(Tuple2<String, String> file){
 		// TODO maybe \r\n is not the right character sequence for newline, it could be \n
@@ -50,16 +63,33 @@ public class Processor {
 		return new Tuple2<String,String>(file._1(), String.join("\r\n", ret));
 	}
 	
+	public AisMessage decodeAisMessage(String msg){
+		Vdm vdm = new Vdm();
+        try {
+			vdm.parse("!BSVDM,1,1,,B,B3@nk60000<EwnWpl=e1gwm5oP06,0*0D");
+			AisMessage message = AisMessage.getInstance(vdm);
+			return message;
+		} catch (SentenceException | AisMessageException | SixbitException e) {
+			return null;
+		}
+	}
 	
-	public List<AISMessage> decodeAISMessage(Tuple2<String, String> file) {
-		List<AISMessage> ret = new ArrayList<AISMessage>();
+	/*
+	public List<AisMessage> decodeAISMessage(Tuple2<String, String> file) {
+		List<AisMessage> ret = new ArrayList<AISMessage>();
 		String content = file._2();
 		InputStream stream = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
 
-		AISInputStreamReader streamReader
+		/*AISInputStreamReader streamReader
     	= new AISInputStreamReader(
     			stream,
                 aisMessage -> ret.add(aisMessage));
+		
+		AISInputStreamReader streamReader
+    	= new AISInputStreamReader(
+    			stream, null
+                );
+		
     	
     	try {
 			streamReader.run();
@@ -206,8 +236,8 @@ public class Processor {
 		}
 	}
 	
-	public void trainGridMap(AISMessage msg){
+	public void trainGridMap(AisMessage msg){
 		
-	}
+	}*/
 	
 }
