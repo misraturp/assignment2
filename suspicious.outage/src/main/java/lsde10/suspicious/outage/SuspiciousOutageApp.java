@@ -1,16 +1,5 @@
 package lsde10.suspicious.outage;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.SequenceInputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.storage.StorageLevel;
 
@@ -19,6 +8,7 @@ import dk.tbsalling.aismessages.ais.messages.PositionReportClassAAssignedSchedul
 import dk.tbsalling.aismessages.ais.messages.PositionReportClassAResponseToInterrogation;
 import dk.tbsalling.aismessages.ais.messages.PositionReportClassAScheduled;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.SparkConf;
 
@@ -73,25 +63,25 @@ public class SuspiciousOutageApp {
 		Processor processor = Processor.getInstance();
 		
 		
-		JavaRDD<String> distFile = sc.textFile("\\user\\hannesm\\lsde\\ais\\10\\01\\00-00.txt");
-		distFile.map(s -> s.length()).reduce((a, b) -> a + b);
+		JavaPairRDD<String, String> files = sc.wholeTextFiles("\\user\\hannesm\\lsde\\ais\\10\\01");
 		
 		//get rid of the time information inside the files, but keep all lines
-		JavaRDD<String> cleanAIS = distFile.filter(s -> s.indexOf("!", 0) != -1 )
-										   .map( s ->  processor.cleanAISMsg(s));
+		JavaPairRDD<String,String> cleanAIS = files.mapToPair(s ->  processor.cleanAISMsg(s));
+		
 		
 		//decode the lines to AISMessages
-		JavaRDD<AISMessage> decoded = cleanAIS.map(s -> processor.decodeAISMessage(s));
+		JavaRDD<AISMessage> decoded = cleanAIS.flatMap(s -> processor.decodeAISMessage(s));
 		decoded.persist(StorageLevel.MEMORY_ONLY());
 		
-		//Find the information interval
-		long length = decoded.count();
+		long count = decoded.count();
+		System.out.println(count);
+
 		//can reduce handle when the message is returned as null?
-		AISMessage maxLatMsg = decoded.reduce((a,b) -> processor.compareLattitude(a, b, true));
-		AISMessage minLatMsg = decoded.reduce((a,b) -> processor.compareLattitude(a, b, false));
+		AISMessage maxLatMsg = decoded.reduce((a,b) -> processor.compareLatitude(a, b, true));
+		AISMessage minLatMsg = decoded.reduce((a,b) -> processor.compareLatitude(a, b, false));
 		
-		AISMessage maxLonMsg = decoded.reduce((a,b) -> processor.compareLongtitude(a, b, true));
-		AISMessage minLonMsg = decoded.reduce((a,b) -> processor.compareLongtitude(a, b, false));
+		AISMessage maxLonMsg = decoded.reduce((a,b) -> processor.compareLongitude(a, b, true));
+		AISMessage minLonMsg = decoded.reduce((a,b) -> processor.compareLongitude(a, b, false));
 		
 		float maxLat = processor.getValue(maxLatMsg, true);
 		float minLat = processor.getValue(minLatMsg, true);
@@ -106,7 +96,7 @@ public class SuspiciousOutageApp {
 		
 		
 		//TODO read the Messages and train a grid-like World-map
-		decoded.foreach(m -> processor.trainGridMap(m)); //  NOT SURE ABOUT THIS
+		//decoded.foreach(m -> processor.trainGridMap(m)); //  NOT SURE ABOUT THIS
 		
 		//TODO find ships that have suspicious outage time
 		
@@ -153,7 +143,7 @@ public class SuspiciousOutageApp {
 			}
 		}*/
 
-		AisTracker.printOutages(30);
+		//AisTracker.printOutages(30);
 		//AisTracker.plotOnMap(180);
     }
 
