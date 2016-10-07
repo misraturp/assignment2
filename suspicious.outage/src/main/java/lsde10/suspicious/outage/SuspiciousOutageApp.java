@@ -4,10 +4,18 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.Function3;
+import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.storage.StorageLevel;
 
 
 import dk.dma.ais.message.AisMessage;
+import dk.dma.ais.message.AisMessage1;
+import dk.dma.ais.message.AisMessage2;
+import dk.dma.ais.message.AisMessage3;
+import dk.dma.ais.message.AisPositionMessage;
+import scala.Tuple2;
+
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 
 import java.util.List;
@@ -55,15 +63,11 @@ public class SuspiciousOutageApp {
 		final Processor processor = Processor.getInstance();
 		
 		
-		JavaRDD<String> files = sc.textFile("\\user\\hannesm\\lsde\\ais\\10\\01\\00-00.txt.gz");
+		JavaRDD<String> files = sc.textFile("/user/hannesm/lsde/ais/10/01/00-00.txt.gz");
 		
 		//get rid of the time information inside the files, but keep all lines
-		//JavaPairRDD<String,String> cleanAIS = files.mapToPair(s ->  processor.cleanAISMsg(s));
 		JavaRDD<String> filteredAIS = files.filter(new Function<String, Boolean>() {
 			
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -93,7 +97,7 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
-		//decode message
+		//decode the lines to AISMessages
 		JavaRDD<AisMessage> rawAIS = cleanedAIS.map(new Function<String, AisMessage>() {
 
 			/**
@@ -107,7 +111,7 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
-		//delete null messages
+		//filter AIS messages for wrong messages and types without position information
 		JavaRDD<AisMessage> decodedAIS = rawAIS.filter(new Function<AisMessage, Boolean>() {
 
 			/**
@@ -119,9 +123,26 @@ public class SuspiciousOutageApp {
 			public Boolean call(AisMessage v1) throws Exception {
 				if(v1 == null)
 					return false;
-				return true;
+				if((v1 instanceof AisPositionMessage)){
+					return true;
+				}
+					
+				return false;
+				
 			}
 		});
+		
+		JavaPairRDD<Integer, AisMessage> mmsi = decodedAIS.mapToPair(new PairFunction<AisMessage, Integer, AisMessage>() {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Tuple2<Integer, AisMessage> call(AisMessage t) throws Exception {
+				return new Tuple2<Integer, AisMessage>(t.getUserId(), t);
+			}
+		});
+		
+		mmsi.groupByKey();
 		
 		decodedAIS.persist(StorageLevel.MEMORY_ONLY());
 		
@@ -147,6 +168,7 @@ public class SuspiciousOutageApp {
 		}); */
 	
 		//decoded.persist(StorageLevel.MEMORY_ONLY());
+		decodedAIS.sample(false, 0.25).coalesce(1).saveAsTextFile("/user/lsde10/success");
 		
 		
 		long count = decodedAIS.count();

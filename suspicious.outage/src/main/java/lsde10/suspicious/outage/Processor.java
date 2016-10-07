@@ -78,6 +78,7 @@ public class Processor implements Serializable {
 	}
 	
 	/*
+<<<<<<< HEAD
 	public List<AisMessage> decodeAISMessage(Tuple2<String, String> file) {
 		List<AisMessage> ret = new ArrayList<AISMessage>();
 		String content = file._2();
