@@ -17,27 +17,21 @@ public class SuspiciousOutageApp {
 	
 	private SparkConf sparkConf;
 	private static JavaSparkContext javaSparkContext;
-	
 	private void init(){
 		sparkConf = new SparkConf().setAppName("SuspiciousOutageApp");
 		javaSparkContext = new JavaSparkContext(sparkConf);
 		
 	}
 	private static SuspiciousOutageApp instance = null;
-
 	private SuspiciousOutageApp() {
 		this.init();
 	}
-
-
 	public static SuspiciousOutageApp getInstance() {
 		if (instance == null) {
 			instance = new SuspiciousOutageApp();
 		}
 		return instance;
 	}
-	
-	
 	public SparkConf getSparkConf() {
 		return sparkConf;
 	}
@@ -50,11 +44,6 @@ public class SuspiciousOutageApp {
 	public void setJavaSparkContext(JavaSparkContext javaSparkContext) {
 		this.javaSparkContext = javaSparkContext;
 	}
-
-
-	
-	
-
 
 	public static void main( String[] args )
     {
@@ -88,6 +77,7 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
+		//remove the exclamation marks
 		JavaRDD<String> cleanedAIS = filteredAIS.map(new Function<String, String>() {
 
 			/**
@@ -101,6 +91,7 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
+		//decode message
 		JavaRDD<AisMessage> rawAIS = cleanedAIS.map(new Function<String, AisMessage>() {
 
 			/**
@@ -175,6 +166,7 @@ public class SuspiciousOutageApp {
 		System.out.printf("minimum latitude: %.5f", minLat);
 		System.out.printf("maximum longtitude: %.5f", maxLon);
 		System.out.printf("maximum longtitude: %.5f", minLon);*/
+				
 		
 		//TODO go over list create track of each message and add that message to the 
 		//list of ships		
