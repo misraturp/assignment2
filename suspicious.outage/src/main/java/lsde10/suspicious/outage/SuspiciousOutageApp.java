@@ -2,6 +2,8 @@ package lsde10.suspicious.outage;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.Function3;
 import org.apache.spark.storage.StorageLevel;
 
 
@@ -105,6 +107,7 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
+		//delete null messages
 		JavaRDD<AisMessage> decodedAIS = rawAIS.filter(new Function<AisMessage, Boolean>() {
 
 			/**
@@ -146,15 +149,53 @@ public class SuspiciousOutageApp {
 		//decoded.persist(StorageLevel.MEMORY_ONLY());
 		
 		
-		/*long count = decoded.count();
+		long count = decodedAIS.count();
 		System.out.println(count);
 
 		//can reduce handle when the message is returned as null?
-		AISMessage maxLatMsg = decoded.reduce((a,b) -> processor.compareLatitude(a, b, true));
-		AISMessage minLatMsg = decoded.reduce((a,b) -> processor.compareLatitude(a, b, false));
+		AisMessage maxLatMsg = decodedAIS.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
+		{
+			
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public AisMessage call(AisMessage msg1, AisMessage msg2) throws Exception {
+					return processor.maximumLatitude(msg1, msg2);
+			}
+		});
 		
-		AISMessage maxLonMsg = decoded.reduce((a,b) -> processor.compareLongitude(a, b, true));
-		AISMessage minLonMsg = decoded.reduce((a,b) -> processor.compareLongitude(a, b, false));
+		AisMessage minLatMsg = decodedAIS.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
+		{
+			
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public AisMessage call(AisMessage msg1, AisMessage msg2) throws Exception {
+					return processor.minimumLatitude(msg1, msg2);
+			}
+		});
+		
+		AisMessage maxLonMsg = decodedAIS.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
+		{
+			
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public AisMessage call(AisMessage msg1, AisMessage msg2) throws Exception {
+					return processor.maximumLongtitude(msg1, msg2);
+			}
+		});
+		
+		AisMessage minLonMsg = decodedAIS.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
+		{
+			
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public AisMessage call(AisMessage msg1, AisMessage msg2) throws Exception {
+					return processor.minimumLongtitude(msg1, msg2);
+			}
+		});
 		
 		float maxLat = processor.getValue(maxLatMsg, true);
 		float minLat = processor.getValue(minLatMsg, true);
@@ -165,7 +206,7 @@ public class SuspiciousOutageApp {
 		System.out.printf("maximum latitude: %.5f", maxLat);
 		System.out.printf("minimum latitude: %.5f", minLat);
 		System.out.printf("maximum longtitude: %.5f", maxLon);
-		System.out.printf("maximum longtitude: %.5f", minLon);*/
+		System.out.printf("maximum longtitude: %.5f", minLon);
 				
 		
 		//TODO go over list create track of each message and add that message to the 
@@ -174,13 +215,14 @@ public class SuspiciousOutageApp {
 		//TODO read the Messages and train a grid-like World-map
 		//decoded.foreach(m -> processor.trainGridMap(m)); //  NOT SURE ABOUT THIS
 		
-		int lat = minLat;
-		int lon = minLon;
+		float lat = minLat;
+		float lon = minLon;
 		int size = 100;
 		
+		/*
 		//create the grids of the whole area
 		List<Grid> grids;
-		while(lat < maxLat && lon < MaxLon)
+		while(lat < maxLat && lon < maxLon)
 		{
 			Grid map = new Grid(lat,lon,size);
 			grids.add(map);
@@ -196,9 +238,9 @@ public class SuspiciousOutageApp {
 			//add the ship to its grid
 			//
 			
-		}
+		}*/
 		//create rdd with this information
-		JavaRDD<Grid> GridMap = javaSparkContext.parallelize(grids);
+		//JavaRDD<Grid> GridMap = javaSparkContext.parallelize(grids);
 		
 		
 		//TODO check if the found ships are in a area where other ships are able to send
