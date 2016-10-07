@@ -66,7 +66,7 @@ public class Processor implements Serializable {
 	public AisMessage decodeAisMessage(String msg){
 		Vdm vdm = new Vdm();
         try {
-			vdm.parse("!BSVDM,1,1,,B,B3@nk60000<EwnWpl=e1gwm5oP06,0*0D");
+			vdm.parse(msg);
 			AisMessage message = AisMessage.getInstance(vdm);
 			return message;
 		} catch (SentenceException | AisMessageException | SixbitException e) {
@@ -75,33 +75,6 @@ public class Processor implements Serializable {
 	}
 	
 	/*
-	public List<AisMessage> decodeAISMessage(Tuple2<String, String> file) {
-		List<AisMessage> ret = new ArrayList<AISMessage>();
-		String content = file._2();
-		InputStream stream = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
-
-		/*AISInputStreamReader streamReader
-    	= new AISInputStreamReader(
-    			stream,
-                aisMessage -> ret.add(aisMessage));
-		
-		AISInputStreamReader streamReader
-    	= new AISInputStreamReader(
-    			stream, null
-                );
-		
-    	
-    	try {
-			streamReader.run();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-    	
-    	return ret;
-	}
-	
-	
-	
 	public AISMessage compareLatitude (AISMessage msg1, AISMessage msg2, boolean max)
 	{
 		float lat1 = 0, lat2 = 0;
