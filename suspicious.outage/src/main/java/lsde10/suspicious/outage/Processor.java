@@ -66,7 +66,7 @@ public class Processor implements Serializable {
 	public AisMessage decodeAisMessage(String msg){
 		Vdm vdm = new Vdm();
         try {
-			vdm.parse("!BSVDM,1,1,,B,B3@nk60000<EwnWpl=e1gwm5oP06,0*0D");
+			vdm.parse(msg);
 			AisMessage message = AisMessage.getInstance(vdm);
 			return message;
 		} catch (SentenceException | AisMessageException | SixbitException e) {

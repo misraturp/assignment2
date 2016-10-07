@@ -7,13 +7,16 @@ import org.apache.spark.storage.StorageLevel;
 
 import dk.dma.ais.message.AisMessage;
 import org.apache.spark.api.java.JavaRDD;
+
+import java.util.List;
+
 import org.apache.spark.SparkConf;
 
 
 public class SuspiciousOutageApp {
 	
 	private SparkConf sparkConf;
-	private JavaSparkContext javaSparkContext;
+	private static JavaSparkContext javaSparkContext;
 	
 	private void init(){
 		sparkConf = new SparkConf().setAppName("SuspiciousOutageApp");
@@ -128,7 +131,6 @@ public class SuspiciousOutageApp {
 		
 		decodedAIS.persist(StorageLevel.MEMORY_ONLY());
 		
-		
 		/*JavaPairRDD<String,String> cleanAIS = files.mapToPair(new PairFunction<Tuple2<String,String>, String, String>(){
 
 			@Override
@@ -174,11 +176,37 @@ public class SuspiciousOutageApp {
 		System.out.printf("maximum longtitude: %.5f", maxLon);
 		System.out.printf("maximum longtitude: %.5f", minLon);*/
 		
+		//TODO go over list create track of each message and add that message to the 
+		//list of ships		
 		
 		//TODO read the Messages and train a grid-like World-map
 		//decoded.foreach(m -> processor.trainGridMap(m)); //  NOT SURE ABOUT THIS
 		
+		int lat = minLat;
+		int lon = minLon;
+		int size = 100;
+		
+		//create the grids of the whole area
+		List<Grid> grids;
+		while(lat < maxLat && lon < MaxLon)
+		{
+			Grid map = new Grid(lat,lon,size);
+			grids.add(map);
+			
+			lat = lat+size;
+			lon = lon+size;
+		}
+		
+		//TODO go over the files and put the mmsi where the ships are
 		//TODO find ships that have suspicious outage time
+		for(int i = 0; i< decoded.count(); i++)
+		{
+			//add the ship to its grid
+			//
+			
+		}
+		//create rdd with this information
+		JavaRDD<Grid> GridMap = javaSparkContext.parallelize(grids);
 		
 		
 		//TODO check if the found ships are in a area where other ships are able to send
