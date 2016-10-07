@@ -6,6 +6,7 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.storage.StorageLevel;
 
+
 import dk.dma.ais.message.AisMessage;
 import dk.dma.ais.message.AisMessage1;
 import dk.dma.ais.message.AisMessage2;
@@ -154,11 +155,6 @@ public class SuspiciousOutageApp {
 		
 		decodedAIS.sample(false, 0.25).coalesce(1).saveAsTextFile("/user/lsde10/success");;
 		
-		/*
-		
-		
-		
-
 		
 		/*long count = decoded.count();
 		System.out.println(count);

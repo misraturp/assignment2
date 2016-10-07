@@ -14,7 +14,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
-
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -34,8 +33,9 @@
 			<artifactId>ais-lib-messages</artifactId>
 			<version>2.0</version>
 		</dependency>
-		
+	
 	</dependencies>
+	
 
 
 	<build>
