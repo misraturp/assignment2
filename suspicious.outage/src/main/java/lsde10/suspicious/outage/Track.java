@@ -1,10 +1,11 @@
 package lsde10.suspicious.outage;
 
+import java.io.Serializable;
 import java.util.Date;
 import org.apache.spark.Accumulator;
 import org.apache.spark.AccumulatorParam;
 
-public class Track extends Accumulator<Track>{
+public class Track implements Serializable{
 	//public int mmsi;
 	private float longtitude;
 	private float latitude;
@@ -12,9 +13,8 @@ public class Track extends Accumulator<Track>{
 	boolean startOut = false;
 	boolean endOut = false;	
 	
-	public Track(Track initialValue, AccumulatorParam<Track> param, float longtitude, float latitude, Date timestamp) 
+	public Track(float longtitude, float latitude, Date timestamp) 
 	{
-		super(initialValue, param);
 		this.longtitude = longtitude;
 		this.latitude = latitude;
 		this.timestamp = timestamp;

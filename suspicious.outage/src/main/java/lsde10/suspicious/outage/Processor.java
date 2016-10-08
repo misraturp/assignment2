@@ -10,6 +10,7 @@ import dk.dma.ais.message.AisMessage1;
 import dk.dma.ais.message.AisMessage2;
 import dk.dma.ais.message.AisMessage3;
 import dk.dma.ais.message.AisMessageException;
+import dk.dma.ais.message.AisPositionMessage;
 import dk.dma.ais.sentence.SentenceException;
 import dk.dma.ais.sentence.Vdm;
 import scala.Tuple2;
@@ -105,40 +106,16 @@ public class Processor implements Serializable {
 	}
 	*/
 	
-	
 	public AisMessage maximumLatitude (AisMessage msg1, AisMessage msg2)
 	{
 		float lat1 = 0, lat2 = 0;
-		if(msg1 instanceof AisMessage1){
-			AisMessage1 r1 = (AisMessage1) msg1;
-			lat1 = r1.getPos().getLatitude();
-		}
-		if(msg1 instanceof AisMessage2)
-		{ 
-			AisMessage2 r2 = (AisMessage2) msg1;
-			lat1 = r2.getPos().getLatitude();
-		}
-		if(msg1 instanceof AisMessage3)
-		{ 
-			AisMessage2 r3 = (AisMessage2) msg1;
-			lat1 = r3.getPos().getLatitude();
-		}
 		
-		if(msg2 instanceof AisMessage1){
-			AisMessage1 p1 = (AisMessage1) msg1;
-			lat2 = p1.getPos().getLatitude();
-		}
-		if(msg2 instanceof AisMessage2)
-		{ 
-			AisMessage2 p2 = (AisMessage2) msg1;
-			lat2 = p2.getPos().getLatitude();
-		}
-		if(msg2 instanceof AisMessage3)
-		{ 
-			AisMessage3 p3 = (AisMessage3) msg1;
-			lat2 = p3.getPos().getLatitude();
-		}
-
+		AisPositionMessage r1 = (AisPositionMessage) msg1;
+		lat1 = r1.getPos().getLatitude();
+		
+		AisPositionMessage r2 = (AisPositionMessage) msg2;
+		lat2 = r2.getPos().getLatitude();
+		
 			if(lat1>=lat2)
 				return msg1;
 			else
@@ -148,35 +125,11 @@ public class Processor implements Serializable {
 	public AisMessage minimumLatitude (AisMessage msg1, AisMessage msg2)
 	{
 		float lat1 = 0, lat2 = 0;
-		if(msg1 instanceof AisMessage1){
-			AisMessage1 r1 = (AisMessage1) msg1;
-			lat1 = r1.getPos().getLatitude();
-		}
-		if(msg1 instanceof AisMessage2)
-		{ 
-			AisMessage2 r2 = (AisMessage2) msg1;
-			lat1 = r2.getPos().getLatitude();
-		}
-		if(msg1 instanceof AisMessage3)
-		{ 
-			AisMessage2 r3 = (AisMessage2) msg1;
-			lat1 = r3.getPos().getLatitude();
-		}
+		AisPositionMessage r1 = (AisPositionMessage) msg1;
+		lat1 = r1.getPos().getLatitude();
 		
-		if(msg2 instanceof AisMessage1){
-			AisMessage1 p1 = (AisMessage1) msg1;
-			lat2 = p1.getPos().getLatitude();
-		}
-		if(msg2 instanceof AisMessage2)
-		{ 
-			AisMessage2 p2 = (AisMessage2) msg1;
-			lat2 = p2.getPos().getLatitude();
-		}
-		if(msg2 instanceof AisMessage3)
-		{ 
-			AisMessage3 p3 = (AisMessage3) msg1;
-			lat2 = p3.getPos().getLatitude();
-		}
+		AisPositionMessage r2 = (AisPositionMessage) msg2;
+		lat2 = r2.getPos().getLatitude();
 
 			if(lat1>=lat2)
 				return msg2;
@@ -187,35 +140,11 @@ public class Processor implements Serializable {
 	public AisMessage maximumLongtitude (AisMessage msg1, AisMessage msg2)
 	{
 		float lon1 = 0,lon2 = 0;
-		if(msg1 instanceof AisMessage1){
-			AisMessage1 r1 = (AisMessage1) msg1;
-			lon1 = r1.getPos().getLongitude();
-		}
-		if(msg1 instanceof AisMessage2)
-		{ 
-			AisMessage2 r2 = (AisMessage2) msg1;
-			lon1 = r2.getPos().getLongitude();
-		}
-		if(msg1 instanceof AisMessage3)
-		{ 
-			AisMessage2 r3 = (AisMessage2) msg1;
-			lon1 = r3.getPos().getLongitude();
-		}
+		AisPositionMessage r1 = (AisPositionMessage) msg1;
+		lon1 = r1.getPos().getLongitude();
 		
-		if(msg2 instanceof AisMessage1){
-			AisMessage1 p1 = (AisMessage1) msg1;
-			lon2 = p1.getPos().getLongitude();
-		}
-		if(msg2 instanceof AisMessage2)
-		{ 
-			AisMessage2 p2 = (AisMessage2) msg1;
-			lon2 = p2.getPos().getLongitude();
-		}
-		if(msg2 instanceof AisMessage3)
-		{ 
-			AisMessage3 p3 = (AisMessage3) msg1;
-			lon2 = p3.getPos().getLongitude();
-		}
+		AisPositionMessage r2 = (AisPositionMessage) msg2;
+		lon2 = r2.getPos().getLongitude();
 		
 			if(lon1>=lon2)
 				return msg1;
@@ -226,35 +155,11 @@ public class Processor implements Serializable {
 	public AisMessage minimumLongtitude (AisMessage msg1, AisMessage msg2)
 	{
 		float lon1 = 0,lon2 = 0;
-		if(msg1 instanceof AisMessage1){
-			AisMessage1 r1 = (AisMessage1) msg1;
-			lon1 = r1.getPos().getLongitude();
-		}
-		if(msg1 instanceof AisMessage2)
-		{ 
-			AisMessage2 r2 = (AisMessage2) msg1;
-			lon1 = r2.getPos().getLongitude();
-		}
-		if(msg1 instanceof AisMessage3)
-		{ 
-			AisMessage2 r3 = (AisMessage2) msg1;
-			lon1 = r3.getPos().getLongitude();
-		}
+		AisPositionMessage r1 = (AisPositionMessage) msg1;
+		lon1 = r1.getPos().getLongitude();
 		
-		if(msg2 instanceof AisMessage1){
-			AisMessage1 p1 = (AisMessage1) msg1;
-			lon2 = p1.getPos().getLongitude();
-		}
-		if(msg2 instanceof AisMessage2)
-		{ 
-			AisMessage2 p2 = (AisMessage2) msg1;
-			lon2 = p2.getPos().getLongitude();
-		}
-		if(msg2 instanceof AisMessage3)
-		{ 
-			AisMessage3 p3 = (AisMessage3) msg1;
-			lon2 = p3.getPos().getLongitude();
-		}
+		AisPositionMessage r2 = (AisPositionMessage) msg2;
+		lon2 = r2.getPos().getLongitude();
 		
 			if(lon1>=lon2)
 				return msg2;
@@ -264,33 +169,14 @@ public class Processor implements Serializable {
 	
 	public float getValue(AisMessage msg, boolean lat)
 	{
-		if(msg instanceof AisMessage1)
-		{
-			AisMessage1 r1 = (AisMessage1) msg;
-			if(lat)
-				return r1.getPos().getLatitude();
-			else
-				return r1.getPos().getLongitude();
-		}
-		if(msg instanceof AisMessage2)
-		{
-			AisMessage2 r2 = (AisMessage2) msg;
-			if(lat)
-				return r2.getPos().getLatitude();
-			else
-				return r2.getPos().getLongitude();
-		}
-		if(msg instanceof AisMessage3)
-		{
-			AisMessage3 r3 = (AisMessage3) msg;
-			if(lat)
-				return r3.getPos().getLatitude();
-			else
-				return r3.getPos().getLongitude();
-		}
-			return 0;
-		}
+		AisMessage1 r1 = (AisMessage1) msg;
+		
+		if(lat)
+			return r1.getPos().getLatitude();
+		else
+			return r1.getPos().getLongitude();
 	}
+}
 	
 	/*
 	public void trainGridMap(AisMessage msg){

@@ -62,18 +62,16 @@ public class SuspiciousOutageApp {
 		JavaSparkContext sc = app.getJavaSparkContext();
 		final Processor processor = Processor.getInstance();
 		
-		
-		JavaRDD<String> files = sc.textFile("/user/hannesm/lsde/ais/10/01/00-00.txt.gz");
+		JavaPairRDD<String, String> files = sc.wholeTextFiles("/user/hannesm/lsde/ais/10/01");
 		
 		//get rid of the time information inside the files, but keep all lines
-		JavaRDD<String> filteredAIS = files.filter(new Function<String, Boolean>() {
-			
+		JavaPairRDD<String, String> filteredAIS = files.filter(new Function<Tuple2<String,String>, Boolean>() {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public Boolean call(String line) throws Exception {
-				if(!line.startsWith("!")){
-					int index = line.indexOf("!", 0);
+			public Boolean call(Tuple2<String,String> line) throws Exception {
+				if(!line._2.startsWith("!")){
+					int index = line._2.indexOf("!", 0);
 					if(index == -1){
 						return false;
 					}
@@ -84,7 +82,7 @@ public class SuspiciousOutageApp {
 		});
 		
 		//remove the exclamation marks
-		JavaRDD<String> cleanedAIS = filteredAIS.map(new Function<String, String>() {
+		JavaPairRDD<String, String> cleanedAIS = filteredAIS.mapValues(new Function<String, String>() {
 
 			/**
 			 * 
@@ -98,7 +96,7 @@ public class SuspiciousOutageApp {
 		});
 		
 		//decode the lines to AISMessages
-		JavaRDD<AisMessage> rawAIS = cleanedAIS.map(new Function<String, AisMessage>() {
+		JavaPairRDD<String,AisMessage> rawAIS = cleanedAIS.mapValues(new Function<String, AisMessage>() {
 
 			/**
 			 * 
@@ -112,7 +110,7 @@ public class SuspiciousOutageApp {
 		});
 		
 		//filter AIS messages for wrong messages and types without position information
-		JavaRDD<AisMessage> decodedAIS = rawAIS.filter(new Function<AisMessage, Boolean>() {
+		JavaPairRDD<String,AisMessage> decodedAIS = rawAIS.filter(new Function<Tuple2<String,AisMessage>, Boolean>() {
 
 			/**
 			 * 
@@ -120,10 +118,10 @@ public class SuspiciousOutageApp {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public Boolean call(AisMessage v1) throws Exception {
-				if(v1 == null)
+			public Boolean call(Tuple2<String,AisMessage> v1) throws Exception {
+				if(v1._2 == null)
 					return false;
-				if((v1 instanceof AisPositionMessage)){
+				if((v1._2 instanceof AisPositionMessage)){
 					return true;
 				}
 					
@@ -132,7 +130,7 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
-		JavaPairRDD<Integer, AisMessage> mmsi = decodedAIS.mapToPair(new PairFunction<AisMessage, Integer, AisMessage>() {
+	/*	JavaPairRDD<Integer, AisMessage> mmsi = decodedAIS.mapToPair(new PairFunction<AisMessage, Integer, AisMessage>() {
 
 			private static final long serialVersionUID = 1L;
 
@@ -140,11 +138,7 @@ public class SuspiciousOutageApp {
 			public Tuple2<Integer, AisMessage> call(AisMessage t) throws Exception {
 				return new Tuple2<Integer, AisMessage>(t.getUserId(), t);
 			}
-		});
-		
-		mmsi.groupByKey();
-		
-		decodedAIS.persist(StorageLevel.MEMORY_ONLY());
+		});*/
 		
 		/*JavaPairRDD<String,String> cleanAIS = files.mapToPair(new PairFunction<Tuple2<String,String>, String, String>(){
 
@@ -170,12 +164,24 @@ public class SuspiciousOutageApp {
 		//decoded.persist(StorageLevel.MEMORY_ONLY());
 		decodedAIS.sample(false, 0.25).coalesce(1).saveAsTextFile("/user/lsde10/success");
 		
-		
 		long count = decodedAIS.count();
 		System.out.println(count);
+		
+		//create a JavaRDD to find max min
+        final JavaRDD<AisMessage> allMessages = decodedAIS.map(new Function<Tuple2<String, AisMessage>,AisMessage>(){ 
+        			/**
+        			 * 
+        			 */
+        			private static final long serialVersionUID = 1L;
+
+        			@Override
+        			public AisMessage call(Tuple2<String, AisMessage> msg) throws Exception {
+        				return msg._2;
+        			}
+                });		
 
 		//can reduce handle when the message is returned as null?
-		AisMessage maxLatMsg = decodedAIS.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
+		AisMessage maxLatMsg = allMessages.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
 		{
 			
 			private static final long serialVersionUID = 1L;
@@ -186,7 +192,7 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
-		AisMessage minLatMsg = decodedAIS.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
+		AisMessage minLatMsg = allMessages.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
 		{
 			
 			private static final long serialVersionUID = 1L;
@@ -197,7 +203,7 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
-		AisMessage maxLonMsg = decodedAIS.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
+		AisMessage maxLonMsg = allMessages.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
 		{
 			
 			private static final long serialVersionUID = 1L;
@@ -208,7 +214,7 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
-		AisMessage minLonMsg = decodedAIS.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
+		AisMessage minLonMsg = allMessages.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
 		{
 			
 			private static final long serialVersionUID = 1L;
@@ -224,12 +230,8 @@ public class SuspiciousOutageApp {
 		
 		float maxLon = processor.getValue(maxLonMsg, false);
 		float minLon = processor.getValue(minLonMsg, false);
-		
-		System.out.printf("maximum latitude: %.5f", maxLat);
-		System.out.printf("minimum latitude: %.5f", minLat);
-		System.out.printf("maximum longtitude: %.5f", maxLon);
-		System.out.printf("maximum longtitude: %.5f", minLon);
 				
+		decodedAIS.sample(false, 0.25).coalesce(1).saveAsTextFile("/user/lsde10/success");
 		
 		//TODO go over list create track of each message and add that message to the 
 		//list of ships		
