@@ -62,8 +62,15 @@ public class Processor implements Serializable {
 			}
 			else ret.add(line);
 		}
+		String str = "";
+		for (String s : ret){
+			str += ret + "\r\n";
+		}
+		int ind = str.lastIndexOf("\r\n");
 		
-		return String.join("\r\n", ret);
+		
+		return str.substring(0, ind);
+	
 	}
 	
 	public Tuple2<String, String> cleanAISMsg(Tuple2<String, String> file){
@@ -85,7 +92,13 @@ public class Processor implements Serializable {
 			else ret.add(line);
 		}
 		
-		return new Tuple2<String,String>(file._1(), String.join("\r\n", ret));
+		String str = "";
+		for (String s : ret){
+			str += ret + "\r\n";
+		}
+		int ind = str.lastIndexOf("\r\n");
+		
+		return new Tuple2<String,String>(file._1(), str.substring(0, ind));
 	}
 
 	
@@ -100,9 +113,46 @@ public class Processor implements Serializable {
 		}
 	}
 	
-	public Tuple2<String, List<AisMessage>> decodeAisMessage(Tuple2<String, String> msg){
-		return null;
-		//TODO
+	/*public Tuple2<String, List<AisMessage>> decodeAisMessage(Tuple2<String, String> msg){
+		String[] content = msg._2().split("\r\n");
+		List<AisMessage> ret = new ArrayList<AisMessage>();
+		
+		
+		Vdm vdm = new Vdm();
+        
+		for(int i = 0; i < content.length; i++){
+			String line = content[i];
+			try {
+				vdm.parse(line);
+				AisMessage message = AisMessage.getInstance(vdm);
+				if(message instanceof AisPositionMessage)
+					ret.add(message);
+			} catch (SentenceException | AisMessageException | SixbitException e) {
+			}
+		}
+		
+		return new Tuple2<String, List<AisMessage>>(msg._1(), ret);
+	}*/
+	
+	public List<Tuple2<String, AisMessage>> decodeAisMessage(Tuple2<String, String> msg){
+		String[] content = msg._2().split("\r\n");
+		List<Tuple2<String, AisMessage>> ret = new ArrayList<Tuple2<String, AisMessage>>();
+		String filename = msg._1();
+		
+		Vdm vdm = new Vdm();
+        
+		for(int i = 0; i < content.length; i++){
+			String line = content[i];
+			try {
+				vdm.parse(line);
+				AisMessage message = AisMessage.getInstance(vdm);
+				if(message instanceof AisPositionMessage)
+					ret.add(new Tuple2<String, AisMessage>(filename, message));
+			} catch (SentenceException | AisMessageException | SixbitException e) {
+			}
+		}
+		
+		return ret;
 	}
 	
 	

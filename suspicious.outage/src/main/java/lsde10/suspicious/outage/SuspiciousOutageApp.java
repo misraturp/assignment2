@@ -1,9 +1,11 @@
 package lsde10.suspicious.outage;
 
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.Function3;
+import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.storage.StorageLevel;
 
@@ -23,6 +25,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.SparkConf;
@@ -100,22 +104,21 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
-		    
-		 
-	    try {
-	    	FileSystem fs = FileSystem.get(app.getConfig()); 
-			Path filenamePath = new Path("/user/lsde10/out/input.txt"); 
-			if (fs.exists(filenamePath)) {
-			    fs.delete(filenamePath, true);
-			}
-			FSDataOutputStream fin = fs.create(filenamePath);
-		    fin.writeUTF("hello");
-		    fin.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
+		
 		//remove the exclamation marks
+		JavaPairRDD<String, String> cleanedAIS = files.flatMapToPair(new PairFlatMapFunction<Tuple2<String,String>, String, String>() {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Iterable<Tuple2<String, String>> call(Tuple2<String, String> t) throws Exception {
+				//return new ArrayList<Tuple2<String, String>>(new Tuple2<String, String>(t._1(), t._2()));
+			}
+		});
+		
+		
+		
+		
 		JavaPairRDD<String, String> cleanedAIS = files.mapValues(new Function<String, String>() {
 
 			private static final long serialVersionUID = 1L;
@@ -128,50 +131,47 @@ public class SuspiciousOutageApp {
 		
 		
 		//decode the lines to AISMessages
-		
-		/*JavaPairRDD<String,AisMessage> rawAIS = cleanedAIS.mapValues(new Function<String, AisMessage>() {
+		JavaPairRDD<String,AisMessage> decodedAIS = cleanedAIS.flatMapToPair(new PairFlatMapFunction<Tuple2<String,String>, String, AisMessage>() {
+
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public AisMessage call(String msg) throws Exception {
-				return processor.decodeAisMessage(msg);
-			}
-		});*/
-		
-		JavaPairRDD<String,List<AisMessage>> rawAIS = cleanedAIS.mapToPair(new PairFunction<Tuple2<String,String>, String, List<AisMessage>>() {
-
-			@Override
-			public Tuple2<String, List<AisMessage>> call(Tuple2<String, String> t) throws Exception {
+			public Iterable<Tuple2<String, AisMessage>> call(Tuple2<String, String> t) throws Exception {
 				return processor.decodeAisMessage(t);
 			}
 		});
 		
-		//filter AIS messages for wrong messages and types without position information
-		JavaPairRDD<String,AisMessage> decodedAIS = rawAIS.filter(new Function<Tuple2<String,AisMessage>, Boolean>() {
+//		JavaRDD<AisMessage> decodedAIS = cleanedAIS.flatMap(new FlatMapFunction<Tuple2<String,String>, AisMessage>() {
+//
+//			private static final long serialVersionUID = 1L;
+//
+//			@Override
+//			public Iterable<AisMessage> call(Tuple2<String, String> t) throws Exception {
+//				// TODO Auto-generated method stub
+//				return null;
+//			}
+//		});
+		
+		JavaRDD<AisMessage> allMessages = decodedAIS.map(new Function<Tuple2<String,AisMessage>, AisMessage>() {
 
+			/**
+			 * 
+			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public Boolean call(Tuple2<String,AisMessage> v1) throws Exception {
-				if(v1._2 == null)
-					return false;
-				if((v1._2 instanceof AisPositionMessage)){
-					return true;
-				}
-				return false;
-				
+			public AisMessage call(Tuple2<String, AisMessage> v1) throws Exception {
+				return v1._2();
 			}
 		});
-		
-
 		
 		//decodedAIS.persist(StorageLevel.MEMORY_ONLY());
 		//decodedAIS.sample(false, 0.25).coalesce(1).saveAsTextFile("/user/lsde10/success");*/
 
 		
 		//create a JavaRDD to find max min
-        final JavaRDD<AisMessage> allMessages = decodedAIS.map(new Function<Tuple2<String, AisMessage>,AisMessage>(){ 
+        /*final JavaRDD<AisMessage> allMessages = decodedAIS.map(new Function<Tuple2<String, AisMessage>,AisMessage>(){ 
 
         			private static final long serialVersionUID = 1L;
 
@@ -179,8 +179,19 @@ public class SuspiciousOutageApp {
         			public AisMessage call(Tuple2<String, AisMessage> msg) throws Exception {
         				return msg._2;
         			}
-                });		
+                });	*/	
 
+//        final JavaRDD<AisMessage> allMessages = decoded.flatMap(new FlatMapFunction<Tuple2<String,List<AisMessage>>, AisMessage>() {
+//
+//			private static final long serialVersionUID = 1L;
+//
+//			@Override
+//			public Iterable<AisMessage> call(Tuple2<String, List<AisMessage>> t) throws Exception {
+//				return t._2();
+//			}
+//		});
+
+        
 		//can reduce handle when the message is returned as null?
 		AisMessage maxLatMsg = allMessages.reduce(new Function2<AisMessage, AisMessage, AisMessage>() 
 		{
@@ -232,7 +243,29 @@ public class SuspiciousOutageApp {
 		float maxLon = processor.getValue(maxLonMsg, false);
 		float minLon = processor.getValue(minLonMsg, false);
 				
-		decodedAIS.sample(false, 0.25).coalesce(1).saveAsTextFile("/user/lsde10/success");
+		//decodedAIS.sample(false, 0.25).coalesce(1).saveAsTextFile("/user/lsde10/success");
+		
+		try {
+	    	FileSystem fs = FileSystem.get(app.getConfig()); 
+			Path filenamePath = new Path("/user/lsde10/out/input.txt"); 
+			if (fs.exists(filenamePath)) {
+			    fs.delete(filenamePath, true);
+			}
+			FSDataOutputStream fin = fs.create(filenamePath);
+			fin.writeUTF("Maximum Latitude");
+		    fin.writeFloat(maxLat);
+		    fin.writeUTF("Minimum Latitude");
+		    fin.writeFloat(minLat);
+		    fin.writeUTF("Maximum Longitute");
+		    fin.writeFloat(maxLon);
+		    fin.writeUTF("Minimum Latitude");
+		    fin.writeFloat(minLon);
+		    fin.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		
 		
 		//TODO go over list create track of each message and add that message to the 
 		//list of ships		
