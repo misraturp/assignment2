@@ -16,6 +16,13 @@ import scala.Tuple2;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+
+import java.io.IOException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.spark.SparkConf;
 
 
@@ -23,11 +30,15 @@ public class SuspiciousOutageApp {
 	
 	private SparkConf sparkConf;
 	private JavaSparkContext javaSparkContext;
-	
+	private Configuration config; 
+
+
 	private void init(){
 		sparkConf = new SparkConf().setAppName("SuspiciousOutageApp");
 		javaSparkContext = new JavaSparkContext(sparkConf);
-		
+		config =  new Configuration();
+		config.addResource(new Path("/HADOOP_HOME/conf/core-site.xml"));
+		config.addResource(new Path("/HADOOP_HOME/conf/hdfs-site.xml"));
 	}
 	private static SuspiciousOutageApp instance = null;
 
@@ -56,6 +67,12 @@ public class SuspiciousOutageApp {
 	public void setJavaSparkContext(JavaSparkContext javaSparkContext) {
 		this.javaSparkContext = javaSparkContext;
 	}
+	public Configuration getConfig() {
+		return config;
+	}
+	public void setConfig(Configuration config) {
+		this.config = config;
+	}
 
 
 	
@@ -70,10 +87,47 @@ public class SuspiciousOutageApp {
 		final Processor processor = Processor.getInstance();
 		
 		
-		JavaRDD<String> files = sc.textFile("/user/hannesm/lsde/ais/10/01/00-00.txt.gz");
+		//JavaRDD<String> files = sc.textFile("/user/hannesm/lsde/ais/10/01/00-00.txt.gz");
+		JavaPairRDD<String, String> wholeFiles = sc.wholeTextFiles("/user/hannesm/lsde/ais/10/01/00-00.txt.gz");
+		//file:/10/01/00-00.txt.gz
+		
+		JavaPairRDD<String, String> files = wholeFiles.mapToPair(new PairFunction<Tuple2<String,String>, String, String>() {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Tuple2<String, String> call(Tuple2<String, String> t) throws Exception {
+				String oldname = t._1();
+				int index = t._1().indexOf("/ais/10/");
+				String filename = oldname.substring(index + 8);
+				String[] split = filename.split("/");
+				String result = split[0] + split[1].replace("-", "").substring(0, 4);
+				
+				return new Tuple2<String, String>(result, t._2());
+			}
+		});
+		
+		    
+		 
+	    try {
+	    	FileSystem fs = FileSystem.get(app.getConfig()); 
+			Path filenamePath = new Path("/user/lsde10/out/input.txt"); 
+			if (fs.exists(filenamePath)) {
+			    fs.delete(filenamePath, true);
+			}
+			FSDataOutputStream fin = fs.create(filenamePath);
+		    fin.writeUTF("hello");
+		    fin.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		    
+		
+		
 		
 		//get rid of the time information inside the files, but keep all lines
-		JavaRDD<String> filteredAIS = files.filter(new Function<String, Boolean>() {
+		/*JavaRDD<String> filteredAIS = files.filter(new Function<String, Boolean>() {
 			
 			private static final long serialVersionUID = 1L;
 
@@ -88,14 +142,22 @@ public class SuspiciousOutageApp {
 				}
 				return true;
 			}
-		});
-		
-		
-		JavaRDD<String> cleanedAIS = filteredAIS.map(new Function<String, String>() {
+		});*/
+		/*JavaPairRDD<String, String> cleanedFiles = files.mapToPair(new PairFunction<Tuple2<String,String>, String, String>() {
 
-			/**
-			 * 
-			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Tuple2<String, String> call(Tuple2<String, String> file) throws Exception {
+				return processor.cleanAISMsg(file);
+			}
+		});*/
+		
+		
+		
+		
+		/*JavaRDD<String> cleanedAIS = filteredAIS.map(new Function<String, String>() {
+
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -107,9 +169,6 @@ public class SuspiciousOutageApp {
 		//decode the lines to AISMessages
 		JavaRDD<AisMessage> rawAIS = cleanedAIS.map(new Function<String, AisMessage>() {
 
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -121,9 +180,6 @@ public class SuspiciousOutageApp {
 		//filter AIS messages for wrong messages and types without position information
 		JavaRDD<AisMessage> decodedAIS = rawAIS.filter(new Function<AisMessage, Boolean>() {
 
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -131,6 +187,8 @@ public class SuspiciousOutageApp {
 				if(v1 == null)
 					return false;
 				if((v1 instanceof AisPositionMessage)){
+					AisPositionMessage v2 = (AisPositionMessage) v1;
+					v2.get
 					return true;
 				}
 					
@@ -139,21 +197,33 @@ public class SuspiciousOutageApp {
 			}
 		});
 		
-		JavaPairRDD<Integer, AisMessage> mmsi = decodedAIS.mapToPair(new PairFunction<AisMessage, Integer, AisMessage>() {
+		JavaPairRDD<Integer, Tuple2<AisMessage,Integer>> mmsi = decodedAIS.mapToPair(new PairFunction<AisMessage, Integer, Tuple2<AisMessage,Integer>>() {
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public Tuple2<Integer, AisMessage> call(AisMessage t) throws Exception {
-				return new Tuple2<Integer, AisMessage>(t.getUserId(), t);
+			public Tuple2<Integer, Tuple2<AisMessage,Integer>> call(AisMessage t) throws Exception {
+				return new Tuple2<Integer, AisMessage>(t.getUserId(), t.get);
 			}
 		});
 		
-		mmsi.groupByKey();
+		JavaPairRDD<Integer, TimeGap> mmsiGrouped = mmsi.reduceByKey(new Function2<AisMessage, AisMessage, AisMessage>() {
+			
+			/**
+			 * 
+			 */
+		/*	private static final long serialVersionUID = 1L;
+
+			@Override
+			public AisMessage call(AisMessage v1, AisMessage v2) throws Exception {
+				// TODO Auto-generated method stub
+				return null;
+			}
+		});
 		
 		decodedAIS.persist(StorageLevel.MEMORY_ONLY());
 		
-		decodedAIS.sample(false, 0.25).coalesce(1).saveAsTextFile("/user/lsde10/success");;
+		decodedAIS.sample(false, 0.25).coalesce(1).saveAsTextFile("/user/lsde10/success");*/
 		
 		
 		/*long count = decoded.count();
