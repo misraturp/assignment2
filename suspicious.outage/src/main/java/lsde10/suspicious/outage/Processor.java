@@ -36,14 +36,35 @@ public class Processor implements Serializable {
 		return instance;
 	}
 	
-	public String cleanAISMsg(String line){
+	/*public String cleanAISMsg(String line){
 		if(!line.startsWith("!")){
 			int index = line.indexOf("!", 0);
 			return line.substring(index);
 		}
 		return line;
-	}
+	}*/
 	
+	public String cleanAISMsg(String file){
+		// TODO maybe \r\n is not the right character sequence for newline, it could be \n
+		
+		String[] content = file.split("\r\n");
+		List<String> ret = new ArrayList<String>();
+		
+		for(int i = 0; i < content.length; i++){
+			String line = content[i];
+			
+			if(!line.startsWith("!")){
+				int index = line.indexOf("!", 0);
+				if(index == -1){
+					continue;
+				}
+				ret.add(line.substring(index));
+			}
+			else ret.add(line);
+		}
+		
+		return String.join("\r\n", ret);
+	}
 	
 	public Tuple2<String, String> cleanAISMsg(Tuple2<String, String> file){
 		// TODO maybe \r\n is not the right character sequence for newline, it could be \n
@@ -66,6 +87,7 @@ public class Processor implements Serializable {
 		
 		return new Tuple2<String,String>(file._1(), String.join("\r\n", ret));
 	}
+
 	
 	public AisMessage decodeAisMessage(String msg){
 		Vdm vdm = new Vdm();
@@ -77,6 +99,13 @@ public class Processor implements Serializable {
 			return null;
 		}
 	}
+	
+	public Tuple2<String, List<AisMessage>> decodeAisMessage(Tuple2<String, String> msg){
+		return null;
+		//TODO
+	}
+	
+	
 	
 	
 	public AisMessage maximumLatitude (AisMessage msg1, AisMessage msg2)

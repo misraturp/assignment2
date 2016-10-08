@@ -128,13 +128,22 @@ public class SuspiciousOutageApp {
 		
 		
 		//decode the lines to AISMessages
-		JavaPairRDD<String,AisMessage> rawAIS = cleanedAIS.mapValues(new Function<String, AisMessage>() {
+		
+		/*JavaPairRDD<String,AisMessage> rawAIS = cleanedAIS.mapValues(new Function<String, AisMessage>() {
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			public AisMessage call(String msg) throws Exception {
 				return processor.decodeAisMessage(msg);
+			}
+		});*/
+		
+		JavaPairRDD<String,List<AisMessage>> rawAIS = cleanedAIS.mapToPair(new PairFunction<Tuple2<String,String>, String, List<AisMessage>>() {
+
+			@Override
+			public Tuple2<String, List<AisMessage>> call(Tuple2<String, String> t) throws Exception {
+				return processor.decodeAisMessage(t);
 			}
 		});
 		
