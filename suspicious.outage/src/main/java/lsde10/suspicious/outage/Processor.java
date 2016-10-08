@@ -6,7 +6,11 @@ import java.util.List;
 
 import dk.dma.ais.binary.SixbitException;
 import dk.dma.ais.message.AisMessage;
+import dk.dma.ais.message.AisMessage1;
+import dk.dma.ais.message.AisMessage2;
+import dk.dma.ais.message.AisMessage3;
 import dk.dma.ais.message.AisMessageException;
+import dk.dma.ais.message.AisPositionMessage;
 import dk.dma.ais.sentence.SentenceException;
 import dk.dma.ais.sentence.Vdm;
 import scala.Tuple2;
@@ -74,143 +78,80 @@ public class Processor implements Serializable {
 		}
 	}
 	
-	/*
-	public AISMessage compareLatitude (AISMessage msg1, AISMessage msg2, boolean max)
+	
+	public AisMessage maximumLatitude (AisMessage msg1, AisMessage msg2)
 	{
 		float lat1 = 0, lat2 = 0;
-		switch(msg1.getMessageType()){
-		case PositionReportClassAScheduled : 
-			PositionReportClassAScheduled r1 = (PositionReportClassAScheduled) msg1;
-			lat1 = r1.getLatitude();
-			break;
-		case PositionReportClassAAssignedSchedule : 
-			PositionReportClassAAssignedSchedule r2 = (PositionReportClassAAssignedSchedule) msg1;
-			lat1 = r2.getLatitude();
-			break;
-		case PositionReportClassAResponseToInterrogation : 
-			PositionReportClassAResponseToInterrogation r3 = (PositionReportClassAResponseToInterrogation) msg1;
-			lat1 = r3.getLatitude();
-			break;
-		default:
-			return null;
-		}
 		
-		switch(msg2.getMessageType()){
-		case PositionReportClassAScheduled : 
-			PositionReportClassAScheduled p1 = (PositionReportClassAScheduled) msg2;
-			lat2 = p1.getLatitude();
-			break;
-		case PositionReportClassAAssignedSchedule : 
-			PositionReportClassAAssignedSchedule p2 = (PositionReportClassAAssignedSchedule) msg2;
-			lat2 = p2.getLatitude();
-			break;
-		case PositionReportClassAResponseToInterrogation : 
-			PositionReportClassAResponseToInterrogation p3 = (PositionReportClassAResponseToInterrogation) msg2;
-			lat2 = p3.getLatitude();
-			break;
-		default:
-			return null;
-		}
+		AisPositionMessage r1 = (AisPositionMessage) msg1;
+		lat1 = r1.getPos().getLatitude();
 		
-		if(max)
-		{
+		AisPositionMessage r2 = (AisPositionMessage) msg2;
+		lat2 = r2.getPos().getLatitude();
+		
 			if(lat1>=lat2)
 				return msg1;
 			else
 				return msg2;
-		}
-		else
-		{
-			if(lat1<=lat2)
-				return msg1;
-			else
-				return msg2;
-		}
-		
 	}
 	
-	public AISMessage compareLongitude (AISMessage msg1, AISMessage msg2, boolean max)
+	public AisMessage minimumLatitude (AisMessage msg1, AisMessage msg2)
 	{
-		float lon1 = 0, lon2 = 0;
-		switch(msg1.getMessageType()){
-		case PositionReportClassAScheduled : 
-			PositionReportClassAScheduled r1 = (PositionReportClassAScheduled) msg1;
-			lon1 = r1.getLongitude();
-			break;
-		case PositionReportClassAAssignedSchedule : 
-			PositionReportClassAAssignedSchedule r2 = (PositionReportClassAAssignedSchedule) msg1;
-			lon1 = r2.getLongitude();
-			break;
-		case PositionReportClassAResponseToInterrogation : 
-			PositionReportClassAResponseToInterrogation r3 = (PositionReportClassAResponseToInterrogation) msg1;
-			lon1 = r3.getLongitude();
-			break;
-		default:
-			return null;
-		}
+		float lat1 = 0, lat2 = 0;
+		AisPositionMessage r1 = (AisPositionMessage) msg1;
+		lat1 = r1.getPos().getLatitude();
 		
-		switch(msg2.getMessageType()){
-		case PositionReportClassAScheduled : 
-			PositionReportClassAScheduled p1 = (PositionReportClassAScheduled) msg2;
-			lon2 = p1.getLongitude();
-			break;
-		case PositionReportClassAAssignedSchedule : 
-			PositionReportClassAAssignedSchedule p2 = (PositionReportClassAAssignedSchedule) msg2;
-			lon2 = p2.getLongitude();
-			break;
-		case PositionReportClassAResponseToInterrogation : 
-			PositionReportClassAResponseToInterrogation p3 = (PositionReportClassAResponseToInterrogation) msg2;
-			lon2 = p3.getLongitude();
-			break;
-		default:
-			return null;
-		}
+		AisPositionMessage r2 = (AisPositionMessage) msg2;
+		lat2 = r2.getPos().getLatitude();
+
+			if(lat1>=lat2)
+				return msg2;
+			else
+				return msg1;
+	}
+	
+	public AisMessage maximumLongtitude (AisMessage msg1, AisMessage msg2)
+	{
+		float lon1 = 0,lon2 = 0;
+		AisPositionMessage r1 = (AisPositionMessage) msg1;
+		lon1 = r1.getPos().getLongitude();
 		
-		if(max)
-		{
+		AisPositionMessage r2 = (AisPositionMessage) msg2;
+		lon2 = r2.getPos().getLongitude();
+		
 			if(lon1>=lon2)
 				return msg1;
 			else
 				return msg2;
-		}
-		else
-		{
-			if(lon1<=lon2)
-				return msg1;
-			else
-				return msg2;
-		}
-		
 	}
 	
-	public float getValue(AISMessage msg, boolean lat)
+	public AisMessage minimumLongtitude (AisMessage msg1, AisMessage msg2)
 	{
-		switch(msg.getMessageType()){
-		case PositionReportClassAScheduled : 
-			PositionReportClassAScheduled r1 = (PositionReportClassAScheduled) msg;
-			if(lat)
-				return r1.getLatitude();
+		float lon1 = 0,lon2 = 0;
+		AisPositionMessage r1 = (AisPositionMessage) msg1;
+		lon1 = r1.getPos().getLongitude();
+		
+		AisPositionMessage r2 = (AisPositionMessage) msg2;
+		lon2 = r2.getPos().getLongitude();
+		
+			if(lon1>=lon2)
+				return msg2;
 			else
-				return r1.getLongitude();
-		case PositionReportClassAAssignedSchedule : 
-			PositionReportClassAAssignedSchedule r2 = (PositionReportClassAAssignedSchedule) msg;
-			if(lat)
-				return r2.getLatitude();
-			else
-				return r2.getLongitude();
-		case PositionReportClassAResponseToInterrogation : 
-			PositionReportClassAResponseToInterrogation r3 = (PositionReportClassAResponseToInterrogation) msg;
-			if(lat)
-				return r3.getLatitude();
-			else
-				return r3.getLongitude();
-		default:
-			return 0;
-		}
+				return msg1;
 	}
 	
+	public float getValue(AisMessage msg, boolean lat)
+	{
+		AisMessage1 r1 = (AisMessage1) msg;
+		
+		if(lat)
+			return r1.getPos().getLatitude();
+		else
+			return r1.getPos().getLongitude();
+	}
+}
+	
+	/*
 	public void trainGridMap(AisMessage msg){
 		
 	}*/
-	
-}

@@ -1,22 +1,24 @@
 package lsde10.suspicious.outage;
 
+import java.io.Serializable;
 import java.util.Date;
+import org.apache.spark.Accumulator;
+import org.apache.spark.AccumulatorParam;
 
-public class Track {
+public class Track implements Serializable{
 	//public int mmsi;
 	private float longtitude;
 	private float latitude;
 	private Date timestamp;
 	boolean startOut = false;
-	boolean endOut = false;
+	boolean endOut = false;	
 	
-	public Track(float latit, float longt, Date time)
+	public Track(float longtitude, float latitude, Date timestamp) 
 	{
-		//mmsi = ship_mmsi;
-		longtitude = longt;
-		latitude = latit;
-		timestamp = time;
-	}	
+		this.longtitude = longtitude;
+		this.latitude = latitude;
+		this.timestamp = timestamp;
+	}
 	
 	/*public int getMmsi() {
 		return mmsi;
