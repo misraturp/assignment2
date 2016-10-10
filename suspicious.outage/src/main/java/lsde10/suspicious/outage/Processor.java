@@ -87,6 +87,7 @@ public class Processor implements Serializable {
 				if(index == -1){
 					continue;
 				}
+				AisPositionMessage m;
 				ret.add(line.substring(index));
 			}
 			else ret.add(line);
