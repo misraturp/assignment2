@@ -7,6 +7,9 @@ import dk.dma.ais.sentence.SentenceException
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.lag
 import org.apache.spark.mllib.rdd.RDDFunctions._
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.SparkConf
 
 
 def fun (line: String) : AisMessage = {
@@ -30,14 +33,23 @@ def fun (line: String) : AisMessage = {
 
 var path :String = "/user/hannesm/lsde/ais/10/01/*.txt.gz"
 
+
+
 var text = sc.wholeTextFiles(path).flatMapValues(y => y.split("\n"))
 
 var data = text.map(p => {
 		val index = p._1.indexOf("/ais/10/")
 		(p._1.substring(index + 8,index + 16).replace("/","").replace("-",""),p._2)
-	}).filter(p => p._2.contains("!")).map(p => (p._1, fun(p._2.substring(p._2.indexOf("!"))))).filter(p => if(p._2 == null) false else true).map(p => (p._2.getUserId(),(p._1.toInt, p._2.asInstanceOf[AisPositionMessage]))).sortBy(p => (p._1,p._2._1)).sliding(2).collect({
+	})//get timestamp from textfile
+	.filter(p => p._2.contains("!"))
+	.map(p => (p._1, fun(p._2.substring(p._2.indexOf("!"))))) //map to (timestamp,aismessage)
+	.filter(p => if(p._2 == null) false else true)
+	.map(p => (p._2.getUserId(),(p._1.toInt, p._2.asInstanceOf[AisPositionMessage])))//map to (mmsi,(timestamp,aismessage))
+	.sortBy(p => (p._1,p._2._1))//sortBy (mmsi, timestamp)
+	.sliding(2).collect({
 		case Array((key1, val1), (key2, val2)) if key1 == key2 => (key1, val2._1 - val1._1)
 	})
+
 	
 var reduced = data.reduceByKey(Math.max(_, _))	
 reduced.take(10).foreach(println)

@@ -10,6 +10,10 @@ import org.apache.spark.mllib.rdd.RDDFunctions._
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.io.compress.GzipCodec
+
 
 /**
  * @author ${user.name}
@@ -42,8 +46,32 @@ object App {
   
     val conf = new SparkConf().setAppName("Finding Outage")
 	val sc = new SparkContext(conf)
-	var path :String = "/user/hannesm/lsde/ais/10/01/*.txt.gz"
+	var path = "/user/hannesm/lsde/ais/10/01/00-00.txt.gz"
+	
+	for (x <- 0 to 3){
+		for (y <- 0 to 59){
+			if(x!=0 || y != 0){
+			path += ",/user/hannesm/lsde/ais/10/01/0" + x.toString() + "-"
+			if( y >= 10)
+				path += y.toString()
+			else
+				path += "0" + y.toString()
+			path += ".txt.gz"
+			}
+		}
+	}
+	
+	
+	
+	
 	var text = sc.wholeTextFiles(path).flatMapValues(y => y.split("\n"))
+	
+	//val text = sc.wholeTextFiles("/user/hannesm/lsde/ais/10/01/*.txt.gz").values.flatMap(file => {
+	//val lines = file.split("\n")
+	//val id = lines.head.split(" ").head
+	//lines.tail.map((id, _))
+	//})
+	//val mmsi = clean.map(p => (p._2.getUserId(),p._1.substring(0,p._1.indexOf(".")).toInt))
 
 	var data = text.map(p => {
 			val index = p._1.indexOf("/ais/10/")
@@ -59,8 +87,12 @@ object App {
 		})
 	data.cache()
 	
+	//clear.distinct()
+	
 	var reduced = data.reduceByKey(Math.max(_, _))	
 	reduced.take(10).foreach(println)
+	
+	reduced.saveAsTextFile("/user/lsde10/threehours",classOf[GzipCodec])
   }
 
 }
