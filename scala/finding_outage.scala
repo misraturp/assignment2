@@ -28,30 +28,43 @@ def fun (line: String) : AisMessage = {
 }	
 
 
-val path :String = "/user/hannesm/lsde/ais/10/01/00-00.txt.gz,/user/hannesm/lsde/ais/10/01/00-01.txt.gz,/user/hannesm/lsde/ais/10/01/00-02.txt.gz,/user/hannesm/lsde/ais/10/01/00-03.txt.gz,/user/hannesm/lsde/ais/10/01/00-04.txt.gz,/user/hannesm/lsde/ais/10/01/00-05.txt.gz,/user/hannesm/lsde/ais/10/01/00-06.txt.gz"
+var path :String = "/user/hannesm/lsde/ais/10/01/*.txt.gz"
 
-
-
-
-
-val text = sc.wholeTextFiles(path).flatMapValues(y => y.split("\n"))
-val text2 = text.map(p => {
+var text = sc.wholeTextFiles(path).flatMapValues(y => y.split("\n"))
+var text2 = text.map(p => {
 	val index = p._1.indexOf("/ais/10/")
 	(p._1.substring(index + 8,index + 16).replace("/","").replace("-",""),p._2)
 })
 
-val notime = text2.filter(p => p._2.contains("!"))
-val not = notime.map(p => (p._1, p._2.substring(p._2.indexOf("!"))))
-val decoded = not.map(p => (p._1, fun(p._2)))
-val clean = decoded.filter(p => if(p._2 == null) false else true)
+var notime = text2.filter(p => p._2.contains("!"))
+var not = notime.map(p => (p._1, p._2.substring(p._2.indexOf("!"))))
+notime = None
 
-//rdd of online (mmsi,timestamp)
+var decoded = not.map(p => (p._1, fun(p._2)))
+not = None
+
+var clean = decoded.filter(p => if(p._2 == null) false else true)
+
+//rdd of online (mmsi,(timestamp, latitude, longitude, shiptype)
+var mmsi = clean.map(p => (p._2.getUserId(),(p._1.toInt, p._2.asInstanceOf[AisPositionMessage])))
+clean = None
+var sorted = mmsi.sortBy(p => (p._1,p._2._1))
+
+var res = sorted.sliding(2).collect {
+  case Array((key1, val1), (key2, val2)) if key1 == key2 => (key1, val2._1 - val1._1)
+}
+sorted = None
+
+res.reduceByKey(Math.max(_, _))
+res.take(10).foreach(println)
+
+
+
 val mmsi = clean.map(p => (p._2.getUserId(),p._1.toInt))
 
 val sorted = mmsi.sortBy(identity)
 
-val partitionedAndSorted = mmsi.mapValues(_._1)
-	.repartitionAndSortWithinPartitions(
+val partitionedAndSorted = mmsi.repartitionAndSortWithinPartitions(
     new org.apache.spark.HashPartitioner(sorted.partitions.size)
   )
 
