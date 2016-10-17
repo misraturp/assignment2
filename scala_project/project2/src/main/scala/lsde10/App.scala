@@ -90,7 +90,7 @@ object App {
 	//clear.distinct()
 	
 	var reduced = data.reduceByKey(Math.max(_, _))	
-	reduced.take(10).foreach(println)
+	//reduced.take(10).foreach(println)
 	
 	reduced.saveAsTextFile("/user/lsde10/threehours",classOf[GzipCodec])
   }
