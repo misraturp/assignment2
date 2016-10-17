@@ -61,7 +61,7 @@ object App {
 	var digitCheck = data.filter(p => if(p._1.toString.length==9)true else false)
 	
 	//gap interval between 20 mins to 10 hours
-	var reduced = data.filter(p => if(p._2 > 1200 && p._2 < 36000) true else false)
+	var reduced = digitCheck.filter(p => if(p._2 > 1200 && p._2 < 36000) true else false)
 	//var reduced = data.reduceByKey(Math.max(_, _))	
 	reduced.saveAsTextFile("reduced_solutions")
 	//hdfs dfs -rm -r <dir_name>
