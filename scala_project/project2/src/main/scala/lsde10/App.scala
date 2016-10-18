@@ -104,15 +104,31 @@ object App {
 	
 	//####################Connectivity for area########################################################
 	
-	//get Location information : format = ((lat,long,timekey), mmsi)
-	var geo1 = location.map(p => (((math floor p._2.getLatitude() *10)/10, (math floor p._2.getLongitude() *10)/10, getTimeKey(new DateTime(p._1._2).toDateTime) ),p._1._1 ))
+	def calculatePercentage(sendingShips: Int, gappingShips: Int) : Float = {
+		val percentage = (100*gappingShips.toFloat)/sendingShips.toFloat
+		return percentage	
+	}
 	
+	//************transmitting ships****************
+	//get Location information : format = ((lat,long,timekey), mmsi)
+	var geo1 = location.map(p => (((math floor p._2.getLatitude() *10)/10, (math floor p._2.getLongitude() *10)/10, getTimeKey(new DateTime(p._1._2).toDateTime)),p._1._1 ))
 	//get number of ships sending in the area and timeinterval
 	var geo2 = geo1.distinct().groupByKey().map(p => (p._1,p._2.size))
 	
-	//save to hdfs
-	geo2.saveAsTextFile("geo_solutions")
+	//***********not transmitting ships*****************
+	//same idea, just for getting the number of ships that have the start of gaps in that place (there will be overlaps)
+	var geogap = reduced.map(p => ((p._5,p._6,p._3),p._1))
+	var geogap2 = geogap.distinct().groupByKey().map(p => (p._1,p._2.size))
+	//((lat,lon,timekey),(size1,size2))
 	
+	//join the two rdds to calculate the connectivity
+	var result = geo2.join(geogap2)
+	var result1 = result.map(p => (p._1,(calculatePercentage(p._2._1,p._2._2))))
+	
+	//save to hdfs
+	//geo2.saveAsTextFile("geo_solutions")
+	result.saveAsTextFile("joined_tables")
+	result1.saveAsTextFile("percentages")	
 	
 	
   }
