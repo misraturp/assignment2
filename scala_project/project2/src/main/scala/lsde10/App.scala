@@ -87,8 +87,7 @@ object App {
 	//get the gaps, the resulting type is (mmsi,gap,starttime, endtime, lat,long)
 	//both latitude and longitude are truncated to reflect the "area"
 	//key is here (mmsi,timestamp)
-	var data = sorted.sliding(2).collect({case Array((key1, val1), (key2, val2)) if key1._1 == key2._1 => (key1._1, key2._2 - key1._2, getTimeKey(new DateTime(key1._2).toDateTime), getTimeKey(new DateTime(key2._2).toDateTime), (math floor val1.getLatitude() *10)/10, (math floor val1.getLongitude() *10)/10)})
-	data.cache()
+	var data = sorted.sliding(2).collect({case Array((key1, val1), (key2, val2)) if key1._1 == key2._1 => (key1._1, key2._2 - key1._2, getTimeKey(new DateTime(key1._2)), getTimeKey(new DateTime(key2._2)), (math floor val1.getLatitude() *10)/10, (math floor val1.getLongitude() *10)/10)})
  
 	//check if mmsi number is correct
 	var digitCheck = data.filter(p => if(p._1.toString.length==9)true else false)
@@ -96,7 +95,7 @@ object App {
 	//gap interval between 20 mins to 10 hours
 	var reduced = digitCheck.filter(p => if(p._2 > 1200 && p._2 < 36000) true else false)
 	
-	//var reduced = data.reduceByKey(Math.max(_, _))	
+	//save to hdfs
 	reduced.saveAsTextFile("reduced_solutions")
 	
 	
@@ -105,7 +104,7 @@ object App {
 	//####################Connectivity for area########################################################
 	
 	//get Location information : format = ((lat,long,timekey), mmsi)
-	var geo1 = location.map(p => (((math floor p._2.getLatitude() *10)/10, (math floor p._2.getLongitude() *10)/10, getTimeKey(new DateTime(p._1._2).toDateTime) ),p._1._1 ))
+	var geo1 = location.map(p => (((math floor p._2.getLatitude() *10)/10, (math floor p._2.getLongitude() *10)/10, getTimeKey(new DateTime(p._1._2)) ),p._1._1 ))
 	
 	//get number of ships sending in the area and timeinterval
 	var geo2 = geo1.distinct().groupByKey().map(p => (p._1,p._2.size))
