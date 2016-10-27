@@ -55,7 +55,7 @@ object App {
 	
 	var path :String = "/user/hannesm/lsde/ais/10/01/*.txt.gz"
 						
-	  val text = sc.wholeTextFiles(path).flatMapValues(y => y.split("\n")).values.flatMap(file => {
+	  val text = sc.wholeTextFiles(path).values.flatMap(file => {
 	  val lines = file.split("\n")
 	  val id = lines.head.split(" ").head
 	  lines.tail.map((id, _))
