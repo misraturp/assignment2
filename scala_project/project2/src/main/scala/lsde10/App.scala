@@ -19,7 +19,7 @@ object App {
 	
 	//useful commands
 	//spark-shell --jars ais-lib-messages-2.0.jar,enav-model-0.3.jar --master yarn
-	//spark-submit --class lsde10.App --master yarn --deploy-mode cluster project2-0.0.1-jar-with-dependencies2.jar
+	//spark-submit --class lsde10.App --master yarn --deploy-mode cluster project2-0.0.1-jar-with-dependencies.jar
 	//hdfs dfs -rm -r <dir_name>
 	//hdfs dfs -copyToLocal <input> <output>
 
@@ -45,11 +45,13 @@ object App {
 	
 	def getTimeKey(time: DateTime) : String = {
 		val hour = time.getHourOfDay()
+		val strhour = "%02d".format(hour)
 		val day = time.getDayOfMonth()
+		val strday = "%02d".format(day)
 		
 		//here we can easily change the granularity by just mapping the hour to a specific key
 		
-		var str = day.toString() + hour.toString()
+		var str = strday+strhour
 		return str
 	
 	}
@@ -72,11 +74,12 @@ object App {
 	
 	//####################Compute the outages########################################################
 	//location = ((mmsi,timestamp), GeoLocation) 
-	val location = decoded.map(p => ((p._2.getUserId(),p._1.substring(0,p._1.indexOf(".")).toInt), p._2.asInstanceOf[AisPositionMessage].getPos().getGeoLocation()))
-	location.cache()
+	val location = decoded.map(p => ((p._2.getUserId(),p._1.substring(0,p._1.indexOf(".")).toLong), p._2.asInstanceOf[AisPositionMessage].getPos().getGeoLocation()))
+	
 	
 	//Check if GeoLocation is null
 	val data5 = location.filter(p => if(p._2 == null) false else true)
+	data5.cache()
 	
 	//get the distinct values
 	val distinct = data5.map(kv => (kv._1,kv)).reduceByKey {case (a,b) => a}.map(_._2)
@@ -87,7 +90,9 @@ object App {
 	//get the gaps, the resulting type is (mmsi,gap,starttime, endtime, lat,long)
 	//both latitude and longitude are truncated to reflect the "area"
 	//key is here (mmsi,timestamp)
-	var data = sorted.sliding(2).collect({case Array((key1, val1), (key2, val2)) if key1._1 == key2._1 => (key1._1, key2._2 - key1._2, getTimeKey(new DateTime(key1._2)), getTimeKey(new DateTime(key2._2)), (math floor val1.getLatitude() *10)/10, (math floor val1.getLongitude() *10)/10)})
+
+	var data = sorted.sliding(2).collect({case Array((key1, val1), (key2, val2)) if key1._1 == key2._1 => (key1._1, key2._2 - key1._2, getTimeKey(new DateTime(key1._2*1000).toDateTime), getTimeKey(new DateTime(key2._2*1000).toDateTime), (math floor val1.getLatitude() *10)/10, (math floor val1.getLongitude() *10)/10)})
+	//data.cache()
  
 	//check if mmsi number is correct
 	var digitCheck = data.filter(p => if(p._1.toString.length==9)true else false)
@@ -95,24 +100,92 @@ object App {
 	//gap interval between 20 mins to 10 hours
 	var reduced = digitCheck.filter(p => if(p._2 > 1200 && p._2 < 36000) true else false)
 	
+
 	//save to hdfs
 	reduced.saveAsTextFile("reduced_solutions")
-	
-	
+
 	
 	
 	//####################Connectivity for area########################################################
 	
+
+	def calculatePercentage(sendingShips: Int, gappingShips: Int) : Float = {
+		val percentage = gappingShips.toFloat/sendingShips.toFloat
+		return percentage	
+	}
+
+	//************transmitting ships****************
 	//get Location information : format = ((lat,long,timekey), mmsi)
-	var geo1 = location.map(p => (((math floor p._2.getLatitude() *10)/10, (math floor p._2.getLongitude() *10)/10, getTimeKey(new DateTime(p._1._2)) ),p._1._1 ))
+	var geo1 = data5.map(p => (((math floor p._2.getLatitude() *10)/10, (math floor p._2.getLongitude() *10)/10, getTimeKey(new DateTime(p._1._2*1000).toDateTime)),p._1._1))
+	
 	
 	//get number of ships sending in the area and timeinterval
 	var geo2 = geo1.distinct().groupByKey().map(p => (p._1,p._2.size))
 	
+	//***********not transmitting ships*****************
+	//same idea, just for getting the number of ships that have the start of gaps in that place (there will be overlaps)
+	var geogap = reduced.map(p => ((p._5,p._6,p._3),p._1))
+	var geogap2 = geogap.distinct().groupByKey().map(p => (p._1,p._2.size))
+	//((lat,lon,timekey),(size1,size2))
+	
+	//join the two rdds to calculate the connectivity
+	var result = geo2.join(geogap2)
+	//((lat,lon,timekey),percentage)
+	var result1 = result.map(p => (p._1,(calculatePercentage(p._2._1,p._2._2))))
+	//var percentages = result1.filter(p => if (p._2 <= 20) true else false)
+	
 	//save to hdfs
-	geo2.saveAsTextFile("geo_solutions")
+	//geo2.saveAsTextFile("geo_solutions")
+	result.saveAsTextFile("joined_tables")
+	result1.saveAsTextFile("percentages")
+	
+	//#################Ranking Outages######################################################
+	
+	def rankShip(gap: Long, percentage: Float, time : String) : Float = {
+		//very basic version of ranking
+		
+		var rank = 0F
+		var alpha = 0.5
+		var beta = 0.3
+		var gamma = 0.2
+		var night = 0.6
+		var day = 0.4
+		
+		//WE NEED TO NORMALIZE GAP TOO, but how??	
+		//gap:seconds
+		//turn into hours and add to rank
+		rank += alpha * gap/600
+		
+		//percentage:percentage of ships not sending messages
+		//turn into 1 to 10 and add to rank
+		rank += beta * percentage
+		
+		//time:day/hour, we only need to get hour and check (9 pm - 6 am night, otherwise day)
+		//night - add 1 otherwise 0
+		var hour : Int = time.substring(2).toInt
+		if(hour < 21 && hour > 6){
+			rank += gamma * night
+		}
+		else{
+			rank += gamma * day
+		}
+		
+		return rank
+			
+	}
+	
+	//reduced(mmsi, gap, starttime, endtime, lat, long) gaps of all ships
+	//result1((lat,lon,timekey),percentage)
+	//what we want to have (mmsi, gap, geo_percentage, starttime)
+	//percentage = percentage of ships that have an outage
+	
+	val gapShips = reduced.map(p => ((p._5,p._6,p._3),(p._1,p._2))) //((lat,lon,startime),(mmsi,gap))
+	val joinedGapShips = gapShips.join(result1)	//((lat,lon,starttime),((mmsi,gap),percentage))
+	val rankingReady = joinedGapShips.map(p => (p._2._1._1, p._2._1._2, p._2._2, p._1._3)) //(mmsi, gap, geo_percentage, starttime)
+	val rankedShips = rankingReady.map(p => (p._1,rankShip(p._2, p._3, p._4)))	//(mmsi, rank)
 	
 	
+	rankedShips.saveAsTextFile("ranked_ships")
 	
   }
 
