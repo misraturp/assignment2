@@ -139,16 +139,16 @@ object App {
 		//very basic version of ranking
 		
 		var rank = 0F
-		var alpha = 0.5
-		var beta = 0.3
-		var gamma = 0.2
-		var night = 0.6
-		var day = 0.4
+		var alpha = 0.5F
+		var beta = 0.3F
+		var gamma = 0.2F
+		var night = 0.6F
+		var day = 0.4F
 		
 		//WE NEED TO NORMALIZE GAP TOO, but how??	
 		//gap:seconds
 		//turn into hours and add to rank
-		rank += alpha * gap/600
+		rank += alpha * (gap/600
 		
 		//percentage:percentage of ships not sending messages
 		//turn into 1 to 10 and add to rank
