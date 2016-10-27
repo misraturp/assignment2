@@ -12,16 +12,11 @@ import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 import org.joda.time._
 
-/**
- * @author ${user.name}
+/* Group 10 - Alex Speicher, Misra Turp
+Finding Suspicious Outages
  */
+
 object App {
-	
-	//useful commands
-	//spark-shell --jars ais-lib-messages-2.0.jar,enav-model-0.3.jar --master yarn
-	//spark-submit --class lsde10.App --master yarn --deploy-mode cluster project2-0.0.1-jar-with-dependencies.jar
-	//hdfs dfs -rm -r <dir_name>
-	//hdfs dfs -copyToLocal <input> <output>
 
   def main(args : Array[String]) {
   
@@ -58,7 +53,7 @@ object App {
 	val conf = new SparkConf().setAppName("Finding Outage")
 	val sc = new SparkContext(conf)
 	
-	var path :String = "/user/hannesm/lsde/ais/10/01/*.txt.gz\n/user/hannesm/lsde/ais/10/02/*.txt.gz\n/user/hannesm/lsde/ais/10/03/*.txt.gz\n/user/hannesm/lsde/ais/10/04/*.txt.gz\n"
+	var path :String = "/user/hannesm/lsde/ais/10/01/*.txt.gz"
 						
 	  val text = sc.wholeTextFiles(path).flatMapValues(y => y.split("\n")).values.flatMap(file => {
 	  val lines = file.split("\n")
@@ -76,11 +71,9 @@ object App {
 	decoded.cache()
 	
 	//####################Compute the outages########################################################
-
 	
 	//allShipsLocation = ((mmsi,timestamp), GeoLocation) 
 	//Check if GeoLocation is null
-
 	
 	val allShipsLocation = decoded.map(p => ((p._2.getUserId(),p._1.substring(0,p._1.indexOf(".")).toLong), p._2.asInstanceOf[AisPositionMessage].getPos().getGeoLocation()))
 							.filter(p => if(p._2 == null) false else true)
@@ -95,7 +88,6 @@ object App {
 
 	//check if mmsi number is correct
 	//gap interval between 20 mins to 10 hours
-
 	
 	var outageData = allShipsLocation.map(kv => (kv._1,kv)).reduceByKey {case (a,b) => a}.map(_._2)
 							.sortBy(_._1)
@@ -109,25 +101,25 @@ object App {
 	
 	//************transmitting ships****************
 	//get Location information : format = ((lat,long,timekey), mmsi)
-	//get number of ships sending in the area and timeinterval
+	//get number of ships sending messages in a particular area and timeinterval
 	var allAreas = allShipsLocation.map(p => (((math floor p._2.getLatitude() *10)/10, (math floor p._2.getLongitude() *10)/10, getTimeKey(new DateTime(p._1._2*1000).toDateTime)),p._1._1))
-									.distinct()
-									.groupByKey().map(p => (p._1,p._2.size))
+					.distinct()
+					.groupByKey().map(p => (p._1,p._2.size))
 	allShipsLocation.unpersist()
 	allAreas.cache()
 	
 	//***********not transmitting ships*****************
-	//same idea, just for getting the number of ships that have the start of gaps in that place (there will be overlaps)
+	//same idea, just for getting the number of ships that have the start of gaps in that place
 	var nonTransmittingAreas = outageData.map(p => ((p._5,p._6,p._3),p._1))
-										.distinct()
-										.groupByKey().map(p => (p._1,p._2.size))
+						.distinct()
+						.groupByKey().map(p => (p._1,p._2.size))
 	nonTransmittingAreas.cache()
 	
 	//((lat,lon,timekey),(size1,size2))
 	//join the two rdds to calculate the connectivity
-	//((lat,lon,timekey),percentage)
+	//((lat,lon,timekey),ratio)
 	var result = allAreas.join(nonTransmittingAreas)
-							.map(p => (p._1,(p._2._1.toFloat)/p._2._2.toFloat))
+				.map(p => (p._1,(p._2._1.toFloat)/p._2._2.toFloat))
 							
 	allAreas.unpersist()
 	nonTransmittingAreas.unpersist()
@@ -136,7 +128,6 @@ object App {
 	//#################Ranking Outages######################################################
 	
 	def rankShip(gap: Long, percentage: Float, time : String) : Float = {
-		//very basic version of ranking
 		
 		var rank = 0F
 		var alpha = 0.5F
@@ -144,18 +135,14 @@ object App {
 		var gamma = 0.2F
 		var night = 0.6F
 		var day = 0.4F
-		
-		//WE NEED TO NORMALIZE GAP TOO, but how??	
+			
 		//gap:seconds
-		//turn into hours and add to rank
-		rank += alpha * (gap/600
+		rank += alpha * (gap/600)
 		
 		//percentage:percentage of ships not sending messages
-		//turn into 1 to 10 and add to rank
 		rank += beta * percentage
 		
 		//time:day/hour, we only need to get hour and check (9 pm - 6 am night, otherwise day)
-		//night - add 1 otherwise 0
 		var hour : Int = time.substring(2).toInt
 		if(hour < 21 && hour > 6){
 			rank += gamma * night
@@ -165,18 +152,17 @@ object App {
 		}
 		
 		return rank
-			
 	}
 	
-	//outageData(mmsi, gap, starttime, endtime, lat, long) gaps of all ships
-	//result((lat,lon,timekey),percentage)
-	//what we want to have (mmsi, gap, geo_percentage, starttime)
-	//percentage = percentage of ships that have an outage
+	//outageData format : (mmsi, gap, starttime, endtime, lat, long) gaps of all ships
+	//result format : ((lat,lon,timekey),percentage)
+	//what we want to have : (mmsi, gap, geo_percentage, starttime)
+	//ratio = ratio of ships that have an outage
 	
 	//((lat,lon,startime),(mmsi,gap))
 	val gapShips = outageData.map(p => ((p._5,p._6,p._3),(p._1,p._2))) 
 	
-	//((lat,lon,starttime),((mmsi,gap),percentage)) - result of join
+	//((lat,lon,starttime),((mmsi,gap),ratio)) - result of join
 	//(mmsi, rank) - final product
 	val rankedShips = gapShips.join(result)
 					.map(p => (p._2._1._1,rankShip(p._2._1._2, p._2._2, p._1._3)))	
